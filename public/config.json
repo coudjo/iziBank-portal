@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "/api/v1",
+  "useMocks": true,
+  "idleWarningSeconds": 120,
+  "refreshWhenRemainingSeconds": 300,
+  "activeWindowSeconds": 60
+}
