@@ -99,6 +99,12 @@ export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, S
       label: 'Closed',
       explanation: 'The business day is not open. Ask a supervisor to open it.',
     },
+    NOT_OPEN: {
+      family: 'warning',
+      icon: 'warning',
+      label: 'Business day not open',
+      explanation: 'The business day is not open for this branch. Ask a supervisor to open it.',
+    },
     EOD_IN_PROGRESS: {
       family: 'info',
       icon: 'sync',

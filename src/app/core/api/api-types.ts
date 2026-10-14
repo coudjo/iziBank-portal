@@ -8,3 +8,4 @@ export type PermissionGrant = Schemas['PermissionGrant'];
 export type BranchSummary = Schemas['BranchSummary'];
 export type LoginRequest = Schemas['LoginRequest'];
 export type ChangeSecretKeyRequest = Schemas['ChangeSecretKeyRequest'];
+export type CurrentBusinessDay = Schemas['CurrentBusinessDay'];

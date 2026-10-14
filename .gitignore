@@ -45,3 +45,4 @@ Thumbs.db
 /test-results
 /playwright-report
 _*.tar
+_to_delete/

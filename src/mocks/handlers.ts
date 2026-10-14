@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type { TokenResponse } from '../app/core/api/api-types';
-import { HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from './data';
+import { BRANCHES, HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from './data';
 
 /**
  * Mock API for development and end-to-end tests, following api/openapi.json and api/problem-types.md.
@@ -14,7 +14,14 @@ interface MockState {
   endedReason?: string;
   users: Record<number, { secret: string; mustChange: boolean }>;
   nextSession: number;
+  /** Latest business day per branch id; a missing branch has never opened a day. */
+  businessDays?: Record<number, { workingDate: string; status: string }>;
 }
+
+/** Head office has an open day; Kumasi has none, so the "Business day not open" chip can be seen. */
+const DEFAULT_BUSINESS_DAYS: Record<number, { workingDate: string; status: string }> = {
+  [HOME_BRANCH.branchId]: { workingDate: '2026-10-14', status: 'OPEN' },
+};
 
 function load(): MockState {
   try {
@@ -57,6 +64,18 @@ const sessions = {
   },
   entries: () => Object.entries(state.sessions),
 };
+
+/** Test hook: set the latest business day of a branch (null: none). */
+export function setBusinessDay(branchId: number, workingDate: string | null, status = 'OPEN'): void {
+  const days = { ...(state.businessDays ?? DEFAULT_BUSINESS_DAYS) };
+  if (workingDate === null) {
+    delete days[branchId];
+  } else {
+    days[branchId] = { workingDate, status };
+  }
+  state.businessDays = days;
+  save(state);
+}
 
 /** Test hook: end every session with a reason, as the API would after a forced logout or idle sweep. */
 export function endSessions(reason: string): void {
@@ -158,6 +177,26 @@ export const handlers = [
       return problem(403, 'auth.branch-not-allowed');
     }
     return HttpResponse.json(profileOf(user, branchId));
+  }),
+
+  http.get(`${base}/business-day/current`, ({ request }) => {
+    const user = caller(request);
+    if (!user) {
+      return ended();
+    }
+    const branchId = Number(request.headers.get('X-Branch-Id') ?? HOME_BRANCH.branchId);
+    const branch = BRANCHES.find((row) => row.branchId === branchId);
+    if (!branch || groupsIn(user, branchId) === null) {
+      return problem(403, 'auth.branch-not-allowed');
+    }
+    const day = (state.businessDays ?? DEFAULT_BUSINESS_DAYS)[branchId];
+    return HttpResponse.json({
+      branchId,
+      branchCode: branch.branchCode,
+      workingDate: day?.workingDate ?? null,
+      status: day?.status ?? null,
+      isOpen: day?.status === 'OPEN',
+    });
   }),
 
   http.get(`${base}/health`, () => HttpResponse.json({ status: 'ok' })),

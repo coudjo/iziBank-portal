@@ -5,6 +5,22 @@
     @if (branch.current(); as current) {
       <span class="context-item"><span class="context-label">Branch</span> {{ current.branchName }}</span>
     }
+    @switch (workingDate.state()) {
+      @case ('open') {
+        <span class="context-item" data-testid="working-date">
+          <span class="context-label">Working date</span> {{ workingDate.displayDate() }}
+        </span>
+      }
+      @case ('end-of-day') {
+        <span class="context-item" data-testid="working-date">
+          <span class="context-label">Working date</span> {{ workingDate.displayDate() }}
+        </span>
+        <ib-status-chip domain="businessDay" code="EOD_IN_PROGRESS" [explain]="true" />
+      }
+      @case ('not-open') {
+        <ib-status-chip domain="businessDay" code="NOT_OPEN" [explain]="true" />
+      }
+    }
   </div>
 
   <button

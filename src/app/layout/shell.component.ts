@@ -5,10 +5,11 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AuthService } from '../core/auth/auth.service';
 import { BranchContext } from '../core/branch/branch-context';
+import { WorkingDateService } from '../core/branch/working-date.service';
 import { ViewportService } from '../core/layout/viewport.service';
 import { PermissionService } from '../core/permissions/permission.service';
 import { SessionMonitor } from '../core/session/session-monitor';
-import { BannerComponent, DialogService, ToastService } from '../shared/ui';
+import { BannerComponent, DialogService, StatusChipComponent, ToastService } from '../shared/ui';
 import { SwitchBranchDialogComponent } from './switch-branch.dialog';
 import { NAV_ITEMS, NavItem } from './navigation';
 
@@ -23,6 +24,7 @@ import { NAV_ITEMS, NavItem } from './navigation';
     NzDropdownModule,
     NzTooltipModule,
     BannerComponent,
+    StatusChipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.component.html',
@@ -34,6 +36,7 @@ export class ShellComponent {
   private readonly router = inject(Router);
   protected readonly viewport = inject(ViewportService);
   protected readonly branch = inject(BranchContext);
+  protected readonly workingDate = inject(WorkingDateService);
   protected readonly maxSessionNotice = inject(SessionMonitor).maxSessionNotice;
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);

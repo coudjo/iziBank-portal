@@ -42,6 +42,18 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   'supervision.reject-not-allowed':
     'This record was changed after approval. Correct it with Edit, then approve.',
   'supervision.has-dependents': 'This record is already in use, so it cannot be rejected.',
+  'reference.code-taken': 'This code is already in use.',
+  'reference.code-immutable': 'A code cannot be changed after it is created.',
+  'record.other-branch': 'This record belongs to another branch. Switch to that branch to change it.',
+  'record.changed': 'Someone else changed this record. Reload it and try again.',
+  'currency.local-required': 'There must always be one local currency. Make another currency local instead.',
+  'holiday.exists': 'A holiday is already set for that date.',
+  'holiday.business-day-exists': 'A branch has already worked on that date, so it cannot be changed.',
+  'business-day.not-open': 'The business day is not open for this branch. Ask a supervisor to open it.',
+  'business-day.previous-open': 'Close the current business day before opening the next one.',
+  'business-day.date-not-after': 'The new business day must come after the last one.',
+  'business-day.non-working-day': 'That date is a weekend or a holiday.',
+  'ledger.field-locked': 'The type and currency cannot change once the account is approved.',
 };
 
 /** Portal-only problems that never come from the API. */

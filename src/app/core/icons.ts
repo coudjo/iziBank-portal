@@ -26,6 +26,7 @@ import {
   SyncOutline,
   TeamOutline,
   UserOutline,
+  WarningOutline,
 } from '@ant-design/icons-angular/icons';
 
 /** Every icon the portal uses, registered statically (frontend plan 4.2.1 rule 1): no runtime icon requests. */
@@ -57,4 +58,5 @@ export const APP_ICONS = [
   SyncOutline,
   TeamOutline,
   UserOutline,
+  WarningOutline,
 ];
