@@ -1,0 +1,141 @@
+<header class="topbar">
+  <a class="wordmark" routerLink="/dashboard">iziBank</a>
+
+  <div class="context">
+    @if (branch.current(); as current) {
+      <span class="context-item"><span class="context-label">Branch</span> {{ current.branchName }}</span>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="user"
+    nz-dropdown
+    nzTrigger="click"
+    [nzDropdownMenu]="userMenu"
+    aria-haspopup="menu"
+  >
+    <span nz-icon nzType="user" aria-hidden="true"></span>
+    <span class="user-name">{{ firstName() }}</span>
+    <span nz-icon nzType="down" aria-hidden="true"></span>
+    <span class="ib-visually-hidden">Account menu</span>
+  </button>
+  <nz-dropdown-menu #userMenu="nzDropdownMenu">
+    <ul nz-menu role="menu">
+      <li nz-menu-item class="menu-meta" nzDisabled role="presentation">
+        {{ me()?.fullName }} ({{ me()?.staffCode }})
+      </li>
+      @if (branch.canSwitch()) {
+        <li
+          nz-menu-item
+          role="menuitem"
+          tabindex="0"
+          (click)="switchBranch()"
+          (keydown.enter)="switchBranch()"
+        >
+          <span nz-icon nzType="bank" aria-hidden="true"></span> Switch branch
+        </li>
+      }
+      <li nz-menu-item role="menuitem" routerLink="/change-password">
+        <span nz-icon nzType="key" aria-hidden="true"></span> Change password
+      </li>
+      <li nz-menu-item role="menuitem" tabindex="0" (click)="signOut()" (keydown.enter)="signOut()">
+        <span nz-icon nzType="logout" aria-hidden="true"></span> Sign out
+      </li>
+    </ul>
+  </nz-dropdown-menu>
+</header>
+
+<div class="body" [class.body--phone]="viewport.size() === 'phone'">
+  @if (viewport.size() !== 'phone') {
+    <nav class="sidebar" [class.sidebar--icons]="viewport.size() === 'tablet'" aria-label="Main">
+      <ul>
+        @for (item of mainItems(); track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              nz-tooltip
+              [nzTooltipTitle]="viewport.size() === 'tablet' ? item.label : null"
+              nzTooltipPlacement="right"
+            >
+              <span nz-icon [nzType]="item.icon" aria-hidden="true"></span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+      @if (adminItems().length > 0) {
+        <p class="nav-section" id="nav-admin">Administration</p>
+        <ul aria-labelledby="nav-admin">
+          @for (item of adminItems(); track item.path) {
+            <li>
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                nz-tooltip
+                [nzTooltipTitle]="viewport.size() === 'tablet' ? item.label : null"
+                nzTooltipPlacement="right"
+              >
+                <span nz-icon [nzType]="item.icon" aria-hidden="true"></span>
+                <span class="nav-label">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </nav>
+  }
+
+  <main id="main" tabindex="-1">
+    @if (maxSessionNotice(); as notice) {
+      <ib-banner tone="warning" [message]="notice" />
+    }
+    <router-outlet />
+  </main>
+</div>
+
+@if (viewport.size() === 'phone') {
+  <nav class="bottombar" aria-label="Main">
+    <a routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page">
+      <span nz-icon nzType="dashboard" aria-hidden="true"></span>
+      <span>Home</span>
+    </a>
+    @for (item of bottomItems(); track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <span nz-icon [nzType]="item.icon" aria-hidden="true"></span>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+    <button
+      type="button"
+      nz-dropdown
+      nzTrigger="click"
+      [nzDropdownMenu]="moreMenu"
+      nzPlacement="topRight"
+      aria-haspopup="menu"
+    >
+      <span nz-icon nzType="menu" aria-hidden="true"></span>
+      <span>More</span>
+    </button>
+    <nz-dropdown-menu #moreMenu="nzDropdownMenu">
+      <ul nz-menu role="menu">
+        @for (item of moreItems(); track item.path) {
+          @if (item.path !== '/dashboard') {
+            <li nz-menu-item role="menuitem" [routerLink]="item.path">
+              <span nz-icon [nzType]="item.icon" aria-hidden="true"></span> {{ item.label }}
+            </li>
+          }
+        }
+        <li nz-menu-item role="menuitem" routerLink="/change-password">
+          <span nz-icon nzType="key" aria-hidden="true"></span> Change password
+        </li>
+        <li nz-menu-item role="menuitem" tabindex="0" (click)="signOut()" (keydown.enter)="signOut()">
+          <span nz-icon nzType="logout" aria-hidden="true"></span> Sign out
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </nav>
+}

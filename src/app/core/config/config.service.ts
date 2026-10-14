@@ -6,6 +6,8 @@ export interface AppConfig {
   idleWarningSeconds: number;
   refreshWhenRemainingSeconds: number;
   activeWindowSeconds: number;
+  /** Notice before the maximum session length (UX 5.8). Optional; defaults to 600. */
+  maxSessionNoticeSeconds?: number;
 }
 
 const REQUIRED: (keyof AppConfig)[] = [

@@ -1,13 +1,124 @@
 @use '@fontsource-variable/inter';
 @import './styles/tokens.css';
 
+:root {
+  --ib-space-1: 4px;
+  --ib-space-2: 8px;
+  --ib-space-3: 12px;
+  --ib-space-4: 16px;
+  --ib-space-5: 24px;
+  --ib-space-6: 32px;
+  --ib-radius-sm: 4px;
+  --ib-radius-md: 8px;
+  --ib-elevation-card: 0 1px 2px rgb(27 38 49 / 8%);
+  --ib-elevation-overlay: 0 8px 24px rgb(27 38 49 / 18%);
+  --ib-control-height: 36px;
+  --ib-touch-target: 44px;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
+
 html,
 body {
   margin: 0;
   min-height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--ib-ink);
+  margin: 0;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 650;
+}
+
+h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+a {
+  color: var(--ib-primary);
+}
+
+.ib-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Tablet and phone: every control is a 44px touch target and inputs use 16px text (no iOS zoom).
+@media (max-width: 1279.98px) {
+  :root {
+    --ib-control-height: 44px;
+  }
+
+  .ant-btn,
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    min-height: 44px;
+  }
+
+  .ant-input,
+  .ant-input-affix-wrapper input,
+  .ant-select-selection-search-input {
+    font-size: 16px;
+  }
+}
+
+// NG-ZORRO's default focus is a soft shadow; staff need a visible ring (WCAG 2.4.11).
+.ant-btn:focus-visible,
+.ant-input:focus-visible,
+.ant-input-affix-wrapper-focused,
+.ant-checkbox-input:focus-visible + .ant-checkbox-inner,
+.ant-menu-item:focus-visible,
+.ant-dropdown-menu-item:focus-visible {
+  outline: 2px solid var(--ib-focus) !important;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Banners use the token tints, not Ant's generated palette.
+@each $tone, $ant in (info: info, success: success, warning: warning, danger: error) {
+  .ant-alert-#{$ant} {
+    background: var(--ib-#{$tone}-bg);
+    border-color: var(--ib-#{$tone}-text);
+
+    .ant-alert-icon {
+      color: var(--ib-#{$tone}-text);
+    }
+  }
+}
+
+.ant-alert-message,
+.ant-alert-description {
+  color: var(--ib-ink);
 }

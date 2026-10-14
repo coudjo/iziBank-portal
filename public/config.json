@@ -3,5 +3,6 @@
   "useMocks": true,
   "idleWarningSeconds": 120,
   "refreshWhenRemainingSeconds": 300,
-  "activeWindowSeconds": 60
+  "activeWindowSeconds": 60,
+  "maxSessionNoticeSeconds": 600
 }

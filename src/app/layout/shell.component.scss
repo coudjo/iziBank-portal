@@ -1,0 +1,218 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--ib-page);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--ib-space-4);
+  height: 56px;
+  padding: 0 var(--ib-space-4);
+  background: var(--ib-surface);
+  border-bottom: 1px solid var(--ib-line);
+}
+
+.wordmark {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ib-primary);
+  text-decoration: none;
+}
+
+.context {
+  flex: 1;
+  display: flex;
+  gap: var(--ib-space-4);
+  justify-content: flex-end;
+  color: var(--ib-ink);
+  min-width: 0;
+}
+
+.context-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-label {
+  color: var(--ib-ink-muted);
+  margin-right: var(--ib-space-1);
+}
+
+.user {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ib-space-2);
+  min-height: var(--ib-touch-target);
+  padding: 0 var(--ib-space-3);
+  background: transparent;
+  border: 1px solid var(--ib-border-control);
+  border-radius: var(--ib-radius-sm);
+  color: var(--ib-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.menu-meta {
+  color: var(--ib-ink-muted) !important;
+  cursor: default;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 232px;
+  flex-shrink: 0;
+  padding: var(--ib-space-4) var(--ib-space-2);
+  background: var(--ib-surface);
+  border-right: 1px solid var(--ib-line);
+
+  ul {
+    list-style: none;
+    margin: 0 0 var(--ib-space-2);
+    padding: 0;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: var(--ib-space-3);
+    min-height: 40px;
+    padding: 0 var(--ib-space-3);
+    border-radius: var(--ib-radius-sm);
+    color: var(--ib-ink);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      background: var(--ib-surface-subtle);
+    }
+
+    &.active {
+      background: var(--ib-primary-tint);
+      color: var(--ib-primary);
+      font-weight: 650;
+    }
+  }
+}
+
+.nav-section {
+  margin: var(--ib-space-4) var(--ib-space-3) var(--ib-space-1);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ib-ink-muted);
+}
+
+.sidebar--icons {
+  width: 72px;
+
+  a {
+    justify-content: center;
+    min-height: var(--ib-touch-target);
+    padding: 0;
+    font-size: 18px;
+  }
+
+  .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .nav-section {
+    text-align: center;
+    margin-inline: 0;
+    font-size: 10px;
+  }
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--ib-space-5);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.body--phone main {
+  padding: var(--ib-space-4) var(--ib-space-4) calc(72px + var(--ib-space-4));
+}
+
+.bottombar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 64px;
+  background: var(--ib-surface);
+  border-top: 1px solid var(--ib-line);
+
+  a,
+  button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: var(--ib-touch-target);
+    color: var(--ib-ink-muted);
+    text-decoration: none;
+    font: inherit;
+    font-size: 12px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+
+    [nz-icon] {
+      font-size: 20px;
+    }
+
+    &.active {
+      color: var(--ib-primary);
+      font-weight: 650;
+    }
+  }
+}
+
+@media (max-width: 767.98px) {
+  // The branch stays visible on phones (UX 4.1), without its label.
+  .context {
+    font-size: 13px;
+    justify-content: flex-start;
+  }
+
+  .context-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .topbar {
+    justify-content: space-between;
+  }
+}

@@ -12,7 +12,12 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit",
     "e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run format:check && npm test -- --watch=false && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm run check:errors && npm run check:contrast && npm run check:colours && npm test -- --watch=false && npm run build",
+    "sync:api": "node scripts/sync-api.mjs",
+    "gen:api": "openapi-typescript api/openapi.json -o src/app/core/api/schema.d.ts",
+    "check:errors": "node scripts/check-error-catalog.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check:colours": "node scripts/check-colours.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.4",
@@ -44,6 +49,7 @@
     "angular-eslint": "22.6.0",
     "eslint": "^10.12.0",
     "jsdom": "^30.0.0",
+    "less": "^4.9.1",
     "msw": "^3.0.3",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.10",
@@ -55,5 +61,8 @@
     "openapi-typescript": {
       "typescript": "$typescript"
     }
+  },
+  "engines": {
+    "node": ">=22.22.3 <23 || >=24.15.0"
   }
 }

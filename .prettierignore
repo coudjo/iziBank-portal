@@ -2,3 +2,8 @@ dist
 node_modules
 public/mockServiceWorker.js
 package-lock.json
+src/app/core/api/schema.d.ts
+api/openapi.json
+api/
+docs/plans/
+CLAUDE.md

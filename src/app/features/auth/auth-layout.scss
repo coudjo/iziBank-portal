@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--ib-page);
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  padding: var(--ib-space-6) var(--ib-space-4);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--ib-space-6) var(--ib-space-5);
+  background: var(--ib-surface);
+  border: 1px solid var(--ib-line);
+  border-radius: var(--ib-radius-md);
+  box-shadow: var(--ib-elevation-card);
+}
+
+.wordmark {
+  display: block;
+  margin-bottom: var(--ib-space-5);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ib-primary);
+}
+
+h1 {
+  margin-bottom: var(--ib-space-4);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.lead {
+  margin: 0 0 var(--ib-space-4);
+  color: var(--ib-ink-muted);
+}
+
+.password {
+  display: flex;
+  gap: var(--ib-space-2);
+
+  input {
+    flex: 1;
+  }
+}
+
+.reveal {
+  min-width: var(--ib-touch-target);
+  border: 1px solid var(--ib-border-control);
+  border-radius: var(--ib-radius-sm);
+  background: var(--ib-surface);
+  color: var(--ib-ink);
+  cursor: pointer;
+}
+
+.submit {
+  margin-top: var(--ib-space-2);
+}
+
+.links {
+  margin-top: var(--ib-space-4);
+  text-align: center;
+}
+
+@media (max-width: 767.98px) {
+  main {
+    padding: var(--ib-space-4);
+  }
+
+  .card {
+    padding: var(--ib-space-5) var(--ib-space-4);
+  }
+}

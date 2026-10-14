@@ -1,0 +1,27 @@
+{
+  "text": [
+    ["--ib-ink", "--ib-surface"],
+    ["--ib-ink", "--ib-page"],
+    ["--ib-ink", "--ib-surface-subtle"],
+    ["--ib-ink-muted", "--ib-surface"],
+    ["--ib-ink-muted", "--ib-page"],
+    ["--ib-ink-meta", "--ib-surface"],
+    ["--ib-ink-meta", "--ib-surface-subtle"],
+    ["--ib-primary", "--ib-surface"],
+    ["--ib-primary", "--ib-primary-tint"],
+    ["#FFFFFF", "--ib-primary"],
+    ["--ib-ink", "--ib-accent"],
+    ["--ib-success-text", "--ib-success-bg"],
+    ["--ib-warning-text", "--ib-warning-bg"],
+    ["--ib-danger-text", "--ib-danger-bg"],
+    ["--ib-danger-text", "--ib-surface"],
+    ["--ib-info-text", "--ib-info-bg"],
+    ["--ib-neutral-text", "--ib-neutral-bg"]
+  ],
+  "nonText": [
+    ["--ib-border-control", "--ib-surface"],
+    ["--ib-border-control", "--ib-page"],
+    ["--ib-focus", "--ib-surface"],
+    ["--ib-focus", "--ib-page"]
+  ]
+}

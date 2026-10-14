@@ -5,6 +5,7 @@ const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 
 module.exports = defineConfig([
+  { ignores: ['src/app/core/api/schema.d.ts'] },
   {
     files: ['**/*.ts'],
     extends: [
@@ -19,7 +20,7 @@ module.exports = defineConfig([
         'error',
         {
           type: 'attribute',
-          prefix: 'app',
+          prefix: ['ib', 'app'],
           style: 'camelCase',
         },
       ],
@@ -27,7 +28,7 @@ module.exports = defineConfig([
         'error',
         {
           type: 'element',
-          prefix: 'app',
+          prefix: ['ib', 'app'],
           style: 'kebab-case',
         },
       ],
