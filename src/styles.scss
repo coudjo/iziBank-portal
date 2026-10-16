@@ -137,3 +137,37 @@ select.ib-input {
 .ib-input[aria-invalid='true'] {
   border-color: var(--ib-danger-text);
 }
+
+// Menus opened by ib-menu-button (CDK overlay, outside component styles).
+.ib-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  padding: var(--ib-space-1) 0;
+  background: var(--ib-surface);
+  border: 1px solid var(--ib-line);
+  border-radius: var(--ib-radius-md);
+  box-shadow: var(--ib-elevation-overlay);
+}
+
+.ib-menu-item {
+  min-height: var(--ib-touch-target);
+  padding: 0 var(--ib-space-4);
+  font: inherit;
+  color: var(--ib-ink);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ib-menu-item:hover,
+.ib-menu-item:focus {
+  background: var(--ib-primary-tint);
+  outline: none;
+}
+
+.ib-menu-item:focus-visible {
+  outline: 2px solid var(--ib-focus);
+  outline-offset: -2px;
+}

@@ -10,6 +10,7 @@ export { IconComponent } from './icon.component';
 export { InputDirective } from './input.directive';
 export { LookupSelectComponent, type LookupOption } from './lookup-select.component';
 export { MaskedValueComponent } from './masked-value.component';
+export { MenuButtonComponent, type MenuItem } from './menu-button.component';
 export { PageHeaderComponent } from './page-header.component';
 export { PhoneInputComponent } from './phone-input.component';
 export { StatusChipComponent } from './status-chip.component';

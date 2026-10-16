@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw';
+import { organisationHandlers } from './organisations';
 import type {
+  BeneficialOwnerView,
+  CreateBusinessRequest,
   CreateIndividualRequest,
+  GroupMemberView,
   KycChecklistItem,
   PartyDetail,
   PartyOverview,
@@ -30,7 +34,26 @@ export const ID_TYPES = [
     isActive: true,
     isCoded: true,
   },
+  { id: 6, code: 'TIN_CERTIFICATE', name: 'TIN certificate', isActive: true, isCoded: true },
 ];
+
+export const BUSINESS_CATEGORIES = [
+  { id: 1, code: 'SOLE_PROPRIETORSHIP', name: 'Sole proprietorship', isActive: true, isCoded: true },
+  { id: 2, code: 'PARTNERSHIP', name: 'Partnership', isActive: true, isCoded: true },
+  { id: 3, code: 'LIMITED_COMPANY', name: 'Limited company', isActive: true, isCoded: true },
+  { id: 4, code: 'NGO', name: 'NGO', isActive: true, isCoded: true },
+  { id: 5, code: 'OTHER', name: 'Other', isActive: true, isCoded: true },
+];
+
+export const MEMBER_ROLES = [
+  { id: 1, code: 'CHAIRPERSON', name: 'Chairperson', isActive: true, isCoded: true },
+  { id: 2, code: 'SECRETARY', name: 'Secretary', isActive: true, isCoded: true },
+  { id: 3, code: 'TREASURER', name: 'Treasurer', isActive: true, isCoded: true },
+  { id: 4, code: 'MEMBER', name: 'Member', isActive: true, isCoded: true },
+];
+
+/** Minimum active members for a group's KYC (API KycOptions, placeholder). */
+const MINIMUM_MEMBERS = 5;
 
 export const CREDIT_OFFICERS = [
   {
@@ -51,6 +74,8 @@ interface MockParty {
   hasDocumentImage: boolean;
   nextOfKin: number;
   hasSignature: boolean;
+  owners?: { ownerPartyId: number; ownershipPercentage: number }[];
+  members?: GroupMemberView[];
 }
 
 interface PartyState {
@@ -116,7 +141,7 @@ function individual(
 
 function seed(): PartyState {
   return {
-    next: 105,
+    next: 106,
     parties: [
       individual(
         101,
@@ -178,9 +203,70 @@ function seed(): PartyState {
           modifiedByUserId: null,
           supervisedByUserId: null,
           individual: null,
-          business: null,
+          business: {
+            businessName: 'Darko Farms Limited',
+            registrationNumber: 'CS123456789',
+            taxIdentificationNumber: 'C0001234567',
+            incorporationDate: '2015-04-01',
+            businessCategoryId: 3,
+            businessCategoryCode: 'LIMITED_COMPANY',
+            beneficialOwners: [],
+          },
           group: null,
         },
+        owners: [{ ownerPartyId: 101, ownershipPercentage: 60 }],
+      },
+      {
+        creditOfficerId: 1,
+        hasPhoto: false,
+        hasDocumentImage: false,
+        nextOfKin: 0,
+        hasSignature: false,
+        detail: {
+          partyId: 105,
+          partyNumber: '0000000105',
+          displayName: 'Nkabom Women Susu Group',
+          partyTypeCode: 'GROUP',
+          kycStatusCode: 'PENDING',
+          effectiveKycStatusCode: 'PENDING',
+          supervisionState: 'PENDING',
+          mobile: null,
+          phone: null,
+          emailAddress: null,
+          address1: 'Kejetia market',
+          address2: null,
+          sourceOfFunds: null,
+          occupationOrSector: null,
+          isPoliticallyExposed: false,
+          createdOn: '2026-10-08T09:30:00Z',
+          createdByUserId: 6,
+          modifiedByUserId: null,
+          supervisedByUserId: null,
+          individual: null,
+          business: null,
+          group: {
+            groupName: 'Nkabom Women Susu Group',
+            formationDate: '2020-06-01',
+            meetingFrequency: 'Weekly',
+            chairpersonPartyId: null,
+            chairpersonPartyNumber: null,
+            chairpersonName: null,
+            activeMemberCount: 0,
+          },
+        },
+        members: [
+          {
+            groupMemberId: 1,
+            memberPartyId: 101,
+            partyNumber: '0000000101',
+            displayName: 'Akosua Darko',
+            groupMemberRoleId: 1,
+            roleCode: 'CHAIRPERSON',
+            joinedOn: '2020-06-01',
+            leftOn: null,
+            isChairperson: true,
+          },
+        ],
       },
     ].map((party) => fixIndividual(party)),
   };
@@ -219,13 +305,25 @@ function load(): PartyState {
 
 let state = load();
 
-function save(): void {
+export function save(): void {
   try {
     sessionStorage.setItem(KEY, JSON.stringify(state));
   } catch {
     // Best effort.
   }
 }
+
+/** Shared with the organisation handlers. */
+export const store = {
+  parties: () => state.parties,
+  nextId: () => state.next++,
+  /** True once: the next create is saved but its response is lost (test hook). */
+  takeDrop: () => {
+    const drop = state.dropNextCreate === true;
+    state.dropNextCreate = false;
+    return drop;
+  },
+};
 
 /** Test hook: the next overview requests fail with this problem type (null: stop failing). */
 export function setOverviewFailure(type: string | null): void {
@@ -245,7 +343,7 @@ export function resetParties(): void {
   save();
 }
 
-const problem = (status: number, type: string, extra: Record<string, unknown> = {}) =>
+export const problem = (status: number, type: string, extra: Record<string, unknown> = {}) =>
   HttpResponse.json(
     { type, title: type, status, ...extra },
     { status, headers: { 'Content-Type': 'application/problem+json' } },
@@ -254,10 +352,36 @@ const problem = (status: number, type: string, extra: Record<string, unknown> = 
 const mask = (value: string | null | undefined) =>
   !value ? null : value.length <= 4 ? '*'.repeat(value.length) : `****${value.slice(-4)}`;
 
-const normalizeId = (value: string) => value.replace(/\s+/g, '').toUpperCase();
+export const normalizeId = (value: string) => value.replace(/\s+/g, '').toUpperCase();
 
 function checklist(party: MockParty): KycChecklistItem[] {
   const detail = party.detail;
+  if (detail.partyTypeCode === 'GROUP') {
+    const active = (party.members ?? []).filter((member) => !member.leftOn);
+    const unverified = active.filter(
+      (member) => find(member.memberPartyId)?.detail.effectiveKycStatusCode !== 'VERIFIED',
+    );
+    return [
+      {
+        code: 'CHAIRPERSON',
+        label: 'Chairperson',
+        done: active.some((member) => member.isChairperson),
+        requiredForKyc: true,
+      },
+      {
+        code: 'MINIMUM_MEMBERS',
+        label: `At least ${MINIMUM_MEMBERS} active members`,
+        done: active.length >= MINIMUM_MEMBERS,
+        requiredForKyc: true,
+      },
+      {
+        code: 'MEMBERS_VERIFIED',
+        label: 'Every active member is KYC verified',
+        done: active.length > 0 && unverified.length === 0,
+        requiredForKyc: true,
+      },
+    ];
+  }
   if (detail.partyTypeCode !== 'INDIVIDUAL') {
     return [
       {
@@ -272,7 +396,12 @@ function checklist(party: MockParty): KycChecklistItem[] {
         done: false,
         requiredForKyc: true,
       },
-      { code: 'TIN', label: 'Tax identification number', done: false, requiredForKyc: true },
+      {
+        code: 'TIN',
+        label: 'Tax identification number',
+        done: !!detail.business?.taxIdentificationNumber,
+        requiredForKyc: true,
+      },
       {
         code: 'BENEFICIAL_OWNERS',
         label: 'At least one beneficial owner',
@@ -425,11 +554,183 @@ function duplicate(body: CreateIndividualRequest, exceptId: number | null): Mock
   );
 }
 
+export function find(id: string | number | readonly string[] | undefined): MockParty | undefined {
+  return state.parties.find((party) => party.detail.partyId === Number(id));
+}
+
+/** The detail as the API returns it, with the business owners and group summary filled in. */
+export function view(party: MockParty): PartyDetail {
+  const detail = party.detail;
+  if (detail.business) {
+    detail.business.beneficialOwners = ownerViews(party);
+  }
+  if (detail.group) {
+    const active = (party.members ?? []).filter((member) => !member.leftOn);
+    const chair = active.find((member) => member.isChairperson);
+    Object.assign(detail.group, {
+      chairpersonPartyId: chair?.memberPartyId ?? null,
+      chairpersonPartyNumber: chair?.partyNumber ?? null,
+      chairpersonName: chair?.displayName ?? null,
+      activeMemberCount: active.length,
+    });
+  }
+  return detail;
+}
+
+export function ownerViews(party: MockParty): BeneficialOwnerView[] {
+  return (party.owners ?? []).map((owner) => {
+    const person = find(owner.ownerPartyId)?.detail;
+    return {
+      ownerPartyId: owner.ownerPartyId,
+      partyNumber: person?.partyNumber ?? '',
+      displayName: person?.displayName ?? '',
+      ownershipPercentage: owner.ownershipPercentage,
+    };
+  });
+}
+
+export const validation = (errors: Record<string, string[]>) =>
+  HttpResponse.json(
+    { type: 'validation', title: 'validation', status: 400, errors },
+    { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+  );
+
+export function blankParty(partyId: number, type: string, name: string): MockParty {
+  return {
+    creditOfficerId: null,
+    hasPhoto: false,
+    hasDocumentImage: false,
+    nextOfKin: 0,
+    hasSignature: false,
+    detail: {
+      partyId,
+      partyNumber: String(partyId).padStart(10, '0'),
+      displayName: name,
+      partyTypeCode: type,
+      kycStatusCode: 'PENDING',
+      effectiveKycStatusCode: 'PENDING',
+      supervisionState: 'PENDING',
+      mobile: null,
+      phone: null,
+      emailAddress: null,
+      address1: null,
+      address2: null,
+      sourceOfFunds: null,
+      occupationOrSector: null,
+      isPoliticallyExposed: false,
+      createdOn: new Date().toISOString(),
+      createdByUserId: 2,
+      modifiedByUserId: null,
+      supervisedByUserId: null,
+      individual: null,
+      business: null,
+      group: null,
+    },
+  };
+}
+
+export function applyBusiness(party: MockParty, body: CreateBusinessRequest): void {
+  Object.assign(party.detail, {
+    displayName: body.businessName,
+    mobile: body.mobile,
+    phone: body.phone,
+    emailAddress: body.emailAddress,
+    address1: body.address1,
+    address2: body.address2,
+    sourceOfFunds: body.sourceOfFunds,
+    occupationOrSector: body.occupationOrSector,
+    business: {
+      businessName: body.businessName ?? '',
+      registrationNumber: normalizeId(body.registrationNumber ?? ''),
+      taxIdentificationNumber: body.taxIdentificationNumber,
+      incorporationDate: body.incorporationDate,
+      businessCategoryId: body.businessCategoryId,
+      businessCategoryCode:
+        BUSINESS_CATEGORIES.find((row) => row.id === body.businessCategoryId)?.code ?? null,
+      beneficialOwners: [],
+    },
+  });
+}
+
+export function businessErrors(body: CreateBusinessRequest): Record<string, string[]> {
+  const errors: Record<string, string[]> = {};
+  if (!body.businessName?.trim()) {
+    errors['businessName'] = ['Enter the business name (up to 150 characters).'];
+  }
+  if (!body.registrationNumber?.trim()) {
+    errors['registrationNumber'] = ['Enter the registration number (up to 40 characters).'];
+  }
+  if (!body.businessCategoryId) {
+    errors['businessCategoryId'] = ['Choose the legal form from the list.'];
+  }
+  if (!body.mobile && !body.phone) {
+    errors['mobile'] = ['Enter a mobile or phone number.'];
+  }
+  if (!body.address1?.trim()) {
+    errors['address1'] = ['Enter the address (up to 200 characters).'];
+  }
+  if (!body.sourceOfFunds?.trim()) {
+    errors['sourceOfFunds'] = ['Enter the source of funds (up to 200 characters).'];
+  }
+  return errors;
+}
+
+/** The group a person is an active member of, other than `exceptGroupId`. */
+export function activeGroupOf(personId: number, exceptGroupId: number | null): MockParty | undefined {
+  return state.parties.find(
+    (party) =>
+      party.detail.partyId !== exceptGroupId &&
+      (party.members ?? []).some((member) => member.memberPartyId === personId && !member.leftOn),
+  );
+}
+
+export const memberIds = { next: 100 };
+
+export function addMember(
+  group: MockParty,
+  personId: number,
+  roleId: number | null,
+  joinedOn: string | null,
+): Response | null {
+  const person = find(personId);
+  if (!person || person.detail.partyTypeCode !== 'INDIVIDUAL') {
+    return validation({
+      memberPartyId: [`Member ${person?.detail.partyNumber ?? personId} is not an individual.`],
+    });
+  }
+  const role = MEMBER_ROLES.find((row) => row.id === roleId);
+  if (!role) {
+    return validation({
+      groupMemberRoleId: [`Member ${person.detail.partyNumber}: choose a role from the list.`],
+    });
+  }
+  const elsewhere = activeGroupOf(personId, group.detail.partyId);
+  if (elsewhere) {
+    return problem(409, 'group.member-in-other-group', {
+      memberPartyNumber: person.detail.partyNumber,
+      groupPartyNumber: elsewhere.detail.partyNumber,
+    });
+  }
+  const members = (group.members ??= []);
+  if (role.code === 'CHAIRPERSON' && members.some((member) => member.isChairperson && !member.leftOn)) {
+    return problem(409, 'group.chairperson-exists');
+  }
+  members.push({
+    groupMemberId: memberIds.next++,
+    memberPartyId: personId,
+    partyNumber: person.detail.partyNumber,
+    displayName: person.detail.displayName,
+    groupMemberRoleId: role.id,
+    roleCode: role.code,
+    joinedOn: joinedOn ?? new Date().toISOString().slice(0, 10),
+    leftOn: null,
+    isChairperson: role.code === 'CHAIRPERSON',
+  });
+  return null;
+}
+
 /** Handlers; `signedIn` returns a problem response when there is no session. */
 export function partyHandlers(base: string, signedIn: (request: Request) => Response | null) {
-  const find = (id: string | readonly string[] | undefined) =>
-    state.parties.find((party) => party.detail.partyId === Number(id));
-
   return [
     http.get(`${base}/lookups/genders`, ({ request }) => signedIn(request) ?? HttpResponse.json(GENDERS)),
     http.get(
@@ -440,6 +741,15 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
       `${base}/credit-officers`,
       ({ request }) => signedIn(request) ?? HttpResponse.json(CREDIT_OFFICERS),
     ),
+    http.get(
+      `${base}/lookups/business-categories`,
+      ({ request }) => signedIn(request) ?? HttpResponse.json(BUSINESS_CATEGORIES),
+    ),
+    http.get(
+      `${base}/lookups/group-member-roles`,
+      ({ request }) => signedIn(request) ?? HttpResponse.json(MEMBER_ROLES),
+    ),
+    ...organisationHandlers(base, signedIn),
 
     http.post(`${base}/parties/search`, async ({ request }) => {
       const denied = signedIn(request);
@@ -479,13 +789,13 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
       if (state.overviewFailure) {
         return problem(500, state.overviewFailure);
       }
-      const party = find(params['id']);
+      const party = find(params['id'] as string);
       if (!party) {
         return problem(404, 'not-found');
       }
       const items = checklist(party);
       const overview: PartyOverview = {
-        party: party.detail,
+        party: view(party),
         checklist: {
           partyId: party.detail.partyId,
           partyTypeCode: party.detail.partyTypeCode,
@@ -511,7 +821,15 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
         creditOfficerName:
           CREDIT_OFFICERS.find((officer) => officer.creditOfficerId === party.creditOfficerId)?.fullName ??
           null,
-        activeGroup: null,
+        activeGroup: ((group) =>
+          group
+            ? {
+                partyId: group.detail.partyId,
+                partyNumber: group.detail.partyNumber,
+                displayName: group.detail.displayName,
+                partyTypeCode: 'GROUP',
+              }
+            : null)(activeGroupOf(party.detail.partyId, null)),
         accounts: [],
       };
       return HttpResponse.json(overview);
@@ -522,8 +840,8 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
       if (denied) {
         return denied;
       }
-      const party = find(params['id']);
-      return party ? HttpResponse.json(party.detail) : problem(404, 'not-found');
+      const party = find(params['id'] as string);
+      return party ? HttpResponse.json(view(party)) : problem(404, 'not-found');
     }),
 
     http.post(`${base}/parties/individuals`, async ({ request }) => {
@@ -566,7 +884,7 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
       if (denied) {
         return denied;
       }
-      const party = find(params['id']);
+      const party = find(params['id'] as string);
       if (!party) {
         return problem(404, 'not-found');
       }

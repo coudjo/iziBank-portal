@@ -14,7 +14,6 @@ import { toApiProblem } from '../../core/errors/api-problem';
 import { messageFor } from '../../core/errors/error-catalog';
 import { formatTimestamp } from '../../core/formats/dates';
 import { displayPhone, searchTerm } from '../../core/formats/phone';
-import { CanDirective } from '../../core/permissions/can.directive';
 import { PermissionService } from '../../core/permissions/permission.service';
 import {
   BannerComponent,
@@ -27,6 +26,8 @@ import {
   FormControlDirective,
   FormFieldComponent,
   InputDirective,
+  MenuButtonComponent,
+  MenuItem,
   PageHeaderComponent,
   StatusChipComponent,
 } from '../../shared/ui';
@@ -35,14 +36,12 @@ import { CustomerFiltersStore } from './customer-filters.store';
 import { CustomersClient } from './customers.client';
 
 const PAGE_SIZE = 25;
-const NEW_INDIVIDUAL = '/customers/new/individual';
 
 /** Customers list (UX 7.2, frontend plan 7.3, F5-01). */
 @Component({
   selector: 'ib-customers-list-page',
   imports: [
     RouterLink,
-    CanDirective,
     BannerComponent,
     ButtonComponent,
     CardDirective,
@@ -53,6 +52,7 @@ const NEW_INDIVIDUAL = '/customers/new/individual';
     FormControlDirective,
     FormFieldComponent,
     InputDirective,
+    MenuButtonComponent,
     PageHeaderComponent,
     StatusChipComponent,
   ],
@@ -102,13 +102,15 @@ const NEW_INDIVIDUAL = '/customers/new/individual';
   template: `
     <ib-page-header title="Customers">
       <div ibActions>
-        <ib-button
-          *ibCan="{ module: 'PTY', subModule: 'PARTY', action: 'add' }"
-          variant="primary"
-          icon="plus"
-          (click)="newCustomer()"
-          >New customer</ib-button
-        >
+        @if (newItems().length > 0) {
+          <ib-menu-button
+            label="New customer"
+            variant="primary"
+            icon="plus"
+            [items]="newItems()"
+            (selected)="newCustomer($event)"
+          />
+        }
       </div>
     </ib-page-header>
 
@@ -236,22 +238,26 @@ const NEW_INDIVIDUAL = '/customers/new/individual';
             >
               <div class="actions">
                 <ib-button (click)="clearFilters()">Clear filters</ib-button>
-                <ib-button
-                  *ibCan="{ module: 'PTY', subModule: 'PARTY', action: 'add' }"
-                  variant="primary"
-                  (click)="newCustomer()"
-                  >New customer</ib-button
-                >
+                @if (newItems().length > 0) {
+                  <ib-menu-button
+                    label="New customer"
+                    variant="primary"
+                    [items]="newItems()"
+                    (selected)="newCustomer($event)"
+                  />
+                }
               </div>
             </ib-empty-state>
           } @else {
             <ib-empty-state title="No customers yet" message="Customers you add appear here." icon="team">
-              <ib-button
-                *ibCan="{ module: 'PTY', subModule: 'PARTY', action: 'add' }"
-                variant="primary"
-                (click)="newCustomer()"
-                >New customer</ib-button
-              >
+              @if (newItems().length > 0) {
+                <ib-menu-button
+                  label="New customer"
+                  variant="primary"
+                  [items]="newItems()"
+                  (selected)="newCustomer($event)"
+                />
+              }
             </ib-empty-state>
           }
         </ng-template>
@@ -284,9 +290,17 @@ export class CustomersListPage {
     { code: 'REJECTED', label: 'Rejected' },
   ];
 
-  private readonly canAdd = computed(() =>
-    this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'add' }),
-  );
+  /** The New customer menu: each kind only with its add permission. */
+  protected readonly newItems = computed((): MenuItem[] => {
+    const items: MenuItem[] = [];
+    if (this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'add' })) {
+      items.push({ label: 'Individual', value: 'individual' }, { label: 'Business', value: 'business' });
+    }
+    if (this.permissions.can({ module: 'PTY', subModule: 'GROUPS', action: 'add' })) {
+      items.push({ label: 'Group', value: 'group' });
+    }
+    return items;
+  });
   private request = 0;
   private debounce: ReturnType<typeof setTimeout> | null = null;
 
@@ -372,14 +386,15 @@ export class CustomersListPage {
     this.store.clear();
   }
 
-  protected newCustomer(): void {
-    void this.router.navigateByUrl(NEW_INDIVIDUAL);
+  protected newCustomer(kind: string): void {
+    void this.router.navigate(['/customers', 'new', kind]);
   }
 
+  /** Alt+N (UX 5.9): a new individual, the most common kind. */
   protected shortcutNew(event: Event): void {
-    if (this.canAdd()) {
+    if (this.newItems().some((item) => item.value === 'individual')) {
       event.preventDefault();
-      this.newCustomer();
+      this.newCustomer('individual');
     }
   }
 

@@ -18,6 +18,15 @@ export async function signIn(page: Page, user: { code: string; secret: string })
 }
 
 export async function expectNoAxeViolations(page: Page): Promise<void> {
+  // Let enter animations (toasts, dialogs) finish: a half-faded element would fail contrast for the wrong reason.
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity,
+      ),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();

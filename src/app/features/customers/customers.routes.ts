@@ -30,6 +30,20 @@ export const CUSTOMER_ROUTES: Routes = [
     loadComponent: () => import('./individual-onboarding.page').then((m) => m.IndividualOnboardingPage),
   },
   {
+    path: 'new/business',
+    title: 'New customer',
+    canMatch: [requirePermission({ module: 'PTY', subModule: 'PARTY', action: 'add' })],
+    canDeactivate: [unsavedChangesGuard],
+    loadComponent: () => import('./business-onboarding.page').then((m) => m.BusinessOnboardingPage),
+  },
+  {
+    path: 'new/group',
+    title: 'New customer',
+    canMatch: [requirePermission({ module: 'PTY', subModule: 'GROUPS', action: 'add' })],
+    canDeactivate: [unsavedChangesGuard],
+    loadComponent: () => import('./group-onboarding.page').then((m) => m.GroupOnboardingPage),
+  },
+  {
     path: ':id',
     title: 'Customer',
     canMatch: [view],
@@ -46,6 +60,17 @@ export const CUSTOMER_ROUTES: Routes = [
         title: 'Customer',
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./details.tab').then((m) => m.CustomerDetailsTab),
+      },
+      {
+        path: 'owners',
+        title: 'Customer',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./owners.tab').then((m) => m.CustomerOwnersTab),
+      },
+      {
+        path: 'members',
+        title: 'Customer',
+        loadComponent: () => import('./members.tab').then((m) => m.CustomerMembersTab),
       },
       ...comingTabs,
     ],

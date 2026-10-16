@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import type { LookupRow } from '../../core/api/api-types';
 import { ConfigService } from '../../core/config/config.service';
@@ -22,6 +22,7 @@ import {
 import { CustomerRecordStore } from './customer-record.store';
 import { CustomersClient } from './customers.client';
 import { IndividualFieldsComponent } from './individual-fields.component';
+import { OrganisationDetailsComponent } from './organisation-details.component';
 import {
   FIELD_MESSAGES,
   STEPS,
@@ -46,6 +47,7 @@ const SECTION_TITLES = { identity: 'Identity', contact: 'Contact', funds: 'Sourc
     ErrorSummaryComponent,
     IndividualFieldsComponent,
     MaskedValueComponent,
+    OrganisationDetailsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -100,7 +102,14 @@ const SECTION_TITLES = { identity: 'Identity', contact: 'Contact', funds: 'Sourc
     }
   `,
   template: `
-    @if (editing()) {
+    @if (store.party(); as party) {
+      @if (party.partyTypeCode !== 'INDIVIDUAL') {
+        <ib-organisation-details [party]="party" />
+      }
+    }
+    @if (store.party()?.partyTypeCode !== 'INDIVIDUAL') {
+      <!-- Businesses and groups are shown above. -->
+    } @else if (editing()) {
       <form [formGroup]="form" (ngSubmit)="save()" novalidate aria-label="Edit customer details">
         @if (message(); as text) {
           <ib-banner tone="danger" [message]="text" />
@@ -207,8 +216,10 @@ export class CustomerDetailsTab implements HasUnsavedChanges {
     );
   });
 
+  private readonly organisation = viewChild(OrganisationDetailsComponent);
+
   hasUnsavedChanges(): boolean {
-    return this.editing() && this.form.dirty;
+    return (this.editing() && this.form.dirty) || (this.organisation()?.hasUnsavedChanges() ?? false);
   }
 
   protected edit(): void {

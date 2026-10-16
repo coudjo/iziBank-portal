@@ -27,5 +27,6 @@ export const CHECKLIST_TABS: Readonly<Record<string, string>> = {
   BENEFICIAL_OWNERS: 'owners',
   MAJOR_OWNERS_VERIFIED: 'owners',
   CHAIRPERSON: 'members',
+  MINIMUM_MEMBERS: 'members',
   MEMBERS_VERIFIED: 'members',
 };

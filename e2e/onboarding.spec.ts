@@ -17,6 +17,7 @@ async function start(page: Page, user = USERS.teller) {
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Customers' }).click();
   await page.getByRole('button', { name: 'New customer' }).click();
+  await page.getByRole('menuitem', { name: 'Individual' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'New individual customer' })).toBeVisible();
 }
 

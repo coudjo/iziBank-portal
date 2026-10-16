@@ -20,3 +20,10 @@ Starting list: frontend plan section 11 and UX design section 9.
   people editing the same customer overwrite each other without a `record.changed` warning.
 - Frontend plan 11 #7 (phone normalisation): the portal sends E.164; the API stores what it receives. A customer
   saved through the API with `024...` would not be found by a portal search for the same number.
+
+## Notes from F6 (2026-10-16)
+
+| #   | Need                                              | Used by                                                                                        | Suggested change                                                       |
+| --- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| P4  | Search rows say which active group a person is in | Group member and chairperson pickers (UX 6.4 step 4: "Already in group [name]" shown disabled) | Add `activeGroupPartyNumber` and `activeGroupName` to `PartySearchRow` |
+| P5  | Search finds a business by registration number    | Business Check now after a lost create (UX 3.1)                                                | Include `BusinessDetail.RegistrationNumber` in the indexed matches     |

@@ -56,3 +56,23 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   that file (addendum section 4).
 - Colours drawn into image pixels (white JPEG background, black signature ink) live in `shared/capture/pixel-colours.ts`,
   the one file outside the token files that `check:colours` allows.
+
+## Businesses and groups (F6)
+
+- `ib-menu-button` is built on `@angular/cdk/menu`, which gives the ARIA menu button pattern (roles, arrow keys,
+  Esc, focus return). The New customer menu lists each kind only with its add permission: individual and business
+  need PTY/PARTY add, group needs PTY/GROUPS add.
+- The three onboarding pages share `OnboardingFlow` (steps, validation, submit outcomes) and
+  `ib-onboarding-frame` (stepper, panels, error summary, action bar).
+- Beneficial owners and the documents are not part of the business create form. They are added on the record
+  (Beneficial owners tab; Documents in F7), as UX 6.3 step 3 describes.
+- Owner shares are typed as text and checked in the portal: above 0, up to 100, two decimals, total at most 100.
+  Saving replaces the whole list (`PUT /parties/{id}/beneficial-owners`).
+- The chairperson is sent as the first member of `POST /parties/groups` with the CHAIRPERSON role; the API checks
+  the person is an individual and not active in another group. A new group opens on its Members tab.
+- Check now (UX 3.1) for a business or group matches the exact name within that customer type, because
+  registration numbers are not searchable.
+- "Already in group [name]" is shown after the API refuses the person, not in the picker beforehand: search rows do
+  not say which group someone is in (api-requests P4).
+- The raw initial-bundle warning budget is 800 kB (was 750 kB). The plan's limit is 250 kB gzipped for the sign-in
+  page; the initial transfer is about 156 kB. Features stay lazy.

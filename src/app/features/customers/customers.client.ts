@@ -2,9 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type {
+  BeneficialOwnerView,
+  CreateBusinessRequest,
+  CreateGroupRequest,
   CreateIndividualRequest,
   CreatedParty,
   CreditOfficerView,
+  GroupMemberView,
+  MemberRequest,
+  OwnerShareRequest,
   PartyDetail,
   PartyOverview,
   PartySearchPage,
@@ -43,5 +49,55 @@ export class CustomersClient {
 
   creditOfficers(): Promise<CreditOfficerView[]> {
     return firstValueFrom(this.http.get<CreditOfficerView[]>(`${this.base}/credit-officers`));
+  }
+
+  createBusiness(request: CreateBusinessRequest): Promise<CreatedParty> {
+    return firstValueFrom(this.http.post<CreatedParty>(`${this.base}/parties/businesses`, request));
+  }
+
+  updateBusiness(partyId: number, request: CreateBusinessRequest): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.base}/parties/${partyId}/business`, request));
+  }
+
+  createGroup(request: CreateGroupRequest): Promise<CreatedParty> {
+    return firstValueFrom(this.http.post<CreatedParty>(`${this.base}/parties/groups`, request));
+  }
+
+  updateGroup(partyId: number, request: CreateGroupRequest): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.base}/parties/${partyId}/group`, request));
+  }
+
+  owners(partyId: number): Promise<BeneficialOwnerView[]> {
+    return firstValueFrom(
+      this.http.get<BeneficialOwnerView[]>(`${this.base}/parties/${partyId}/beneficial-owners`),
+    );
+  }
+
+  replaceOwners(partyId: number, owners: OwnerShareRequest[]): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(`${this.base}/parties/${partyId}/beneficial-owners`, { beneficialOwners: owners }),
+    );
+  }
+
+  members(partyId: number): Promise<GroupMemberView[]> {
+    return firstValueFrom(this.http.get<GroupMemberView[]>(`${this.base}/parties/${partyId}/members`));
+  }
+
+  addMember(partyId: number, request: MemberRequest): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/members`, request));
+  }
+
+  leave(partyId: number, memberPartyId: number, leftOn: string | null): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.base}/parties/${partyId}/members/${memberPartyId}/leave`, { leftOn }),
+    );
+  }
+
+  changeRole(partyId: number, memberPartyId: number, groupMemberRoleId: number): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(`${this.base}/parties/${partyId}/members/${memberPartyId}/role`, {
+        groupMemberRoleId,
+      }),
+    );
   }
 }
