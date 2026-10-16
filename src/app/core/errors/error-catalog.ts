@@ -54,6 +54,26 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   'business-day.date-not-after': 'The new business day must come after the last one.',
   'business-day.non-working-day': 'That date is a weekend or a holiday.',
   'ledger.field-locked': 'The type and currency cannot change once the account is approved.',
+  'party.duplicate-identification': 'A customer with this ID already exists: {name} ({number}).',
+  'party.duplicate-registration':
+    'A business with this registration number already exists: {name} ({number}).',
+  'group.member-in-other-group': 'This person is already an active member of another group ({group}).',
+  'group.chairperson-exists': 'This group already has a chairperson.',
+  'party.primary-document':
+    "This is the customer's main ID document, so it cannot be deleted. Change the ID on the Details tab instead.",
+  'upload.empty': 'The file is empty. Choose another file.',
+  'upload.too-large': 'The file is too large. The limit is {size}.',
+  'upload.type-not-allowed':
+    'This type of file is not allowed. Use a JPEG or PNG image, or a PDF for documents.',
+  'upload.type-mismatch':
+    'The file does not match its type. Save it again as a JPEG, PNG or PDF and try again.',
+  'upload.dimensions': 'The signature image is too large. It can be at most {width} by {height} pixels.',
+  'credit-officer.exists': 'This staff member is already a credit officer.',
+  'kyc.checklist-incomplete': 'The checklist is not complete, so KYC cannot be verified yet.',
+  'kyc.not-pending': 'KYC for this customer has already been decided.',
+  'idempotency.key-invalid': 'Something went wrong. Try again.',
+  'idempotency.key-reused': 'This was already sent with different details. Start again.',
+  'idempotency.in-progress': 'The first attempt is still being processed. Wait a moment, then check again.',
 };
 
 /** Portal-only problems that never come from the API. */
@@ -61,7 +81,15 @@ const LOCAL_MESSAGES: Readonly<Record<string, string>> = {
   network: 'We could not reach the server. Check the connection and try again.',
 };
 
-export function messageFor(problem: Pick<ApiProblem, 'type' | 'extensions'>, traceId?: string): string {
+/**
+ * The message for a problem. `{placeholders}` are filled from the problem's extensions and from `values` (for
+ * example a customer's name the screen looked up); a placeholder with no value is dropped with its brackets.
+ */
+export function messageFor(
+  problem: Pick<ApiProblem, 'type' | 'extensions'>,
+  traceId?: string,
+  values: Readonly<Record<string, string>> = {},
+): string {
   if (problem.type === 'auth.locked') {
     const seconds = Number(problem.extensions['retryAfterSeconds'] ?? 0);
     const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -70,8 +98,53 @@ export function messageFor(problem: Pick<ApiProblem, 'type' | 'extensions'>, tra
 
   const message = ERROR_MESSAGES[problem.type] ?? LOCAL_MESSAGES[problem.type];
   if (message) {
-    return message;
+    return fill(message, { ...placeholders(problem.extensions), ...values });
   }
 
   return traceId ? `Something went wrong. Reference: ${traceId}` : ERROR_MESSAGES['unexpected'];
+}
+
+/** Extension names the API uses, mapped to the placeholders in the messages above. */
+function placeholders(extensions: Readonly<Record<string, unknown>>): Record<string, string> {
+  const result: Record<string, string> = {};
+  const text = (key: string) => (typeof extensions[key] === 'string' ? (extensions[key] as string) : null);
+  const number = (key: string) => (typeof extensions[key] === 'number' ? (extensions[key] as number) : null);
+
+  const party = text('existingPartyNumber') ?? text('memberPartyNumber');
+  if (party) {
+    result['number'] = party;
+  }
+  const group = text('groupPartyNumber');
+  if (group) {
+    result['group'] = group;
+  }
+  const maxBytes = number('maxBytes');
+  if (maxBytes !== null) {
+    result['size'] = formatBytes(maxBytes);
+  }
+  const width = number('maxWidth');
+  const height = number('maxHeight');
+  if (width !== null && height !== null) {
+    result['width'] = String(width);
+    result['height'] = String(height);
+  }
+  return result;
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    const megabytes = bytes / (1024 * 1024);
+    return `${Number.isInteger(megabytes) ? megabytes : megabytes.toFixed(1)} MB`;
+  }
+  return `${Math.ceil(bytes / 1024)} KB`;
+}
+
+/** Fills `{name}` placeholders. "{name} ({number})" with only a number becomes "({number})" without the gap. */
+function fill(message: string, values: Readonly<Record<string, string>>): string {
+  return message
+    .replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? '')
+    .replace(/:\s+\(/g, ' (')
+    .replace(/\s*\(\)/g, '')
+    .replace(/\s+([.,])/g, '$1')
+    .replace(/:\./g, '.');
 }

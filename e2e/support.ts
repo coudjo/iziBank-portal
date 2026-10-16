@@ -5,6 +5,8 @@ export const USERS = {
   teller: { code: 'TELLER1', secret: 'Teller-Pass1' },
   kyc: { code: 'KYC1', secret: 'Kyc-Pass1' },
   admin: { code: 'ADMIN', secret: 'Admin-Pass1' },
+  field: { code: 'FIELD1', secret: 'Field-Pass1' },
+  auditor: { code: 'AUDIT1', secret: 'Audit-Pass1' },
   locked: { code: 'LOCKED', secret: 'Locked-Pass1' },
 };
 

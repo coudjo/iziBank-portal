@@ -8,6 +8,8 @@ export interface AppConfig {
   activeWindowSeconds: number;
   /** Notice before the maximum session length (UX 5.8). Optional; defaults to 600. */
   maxSessionNoticeSeconds?: number;
+  /** Youngest customer age (frontend plan D4, a placeholder pending compliance). Optional; defaults to 18. */
+  minimumCustomerAgeYears?: number;
 }
 
 const REQUIRED: (keyof AppConfig)[] = [

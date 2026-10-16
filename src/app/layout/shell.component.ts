@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, isDevMode } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, computed, inject, isDevMode } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -27,6 +27,7 @@ import { NAV_ITEMS, NavItem } from './navigation';
     StatusChipComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown)': 'shortcut($event)' },
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -42,6 +43,11 @@ export class ShellComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly me = this.auth.me;
+  protected readonly canSearch = computed(() => {
+    this.me();
+    return this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'view' });
+  });
+  private overlayOpen = false;
   protected readonly firstName = computed(() => this.me()?.fullName.split(' ')[0] ?? '');
 
   protected readonly visible = computed(() => {
@@ -59,6 +65,47 @@ export class ShellComponent {
 
   protected trackPath(_: number, item: NavItem): string {
     return item.path;
+  }
+
+  /** UX 5.9: `/` or Ctrl+K opens search, `?` lists the shortcuts. Ignored while typing in a field. */
+  protected shortcut(event: KeyboardEvent): void {
+    if (this.overlayOpen || event.defaultPrevented) {
+      return;
+    }
+    const typing = isTyping(event.target);
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.openSearch();
+    } else if (!typing && event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      this.openSearch();
+    } else if (!typing && event.key === '?') {
+      event.preventDefault();
+      void this.overlay(
+        import('./shortcuts.dialog').then((m) => m.ShortcutsDialogComponent),
+        'Keyboard shortcuts',
+      );
+    }
+  }
+
+  protected openSearch(): void {
+    if (this.canSearch() && !this.overlayOpen) {
+      void this.overlay(
+        import('./search.dialog').then((m) => m.SearchDialogComponent),
+        'Search',
+        600,
+      );
+    }
+  }
+
+  private async overlay(component: Promise<Type<unknown>>, title: string, width?: number): Promise<void> {
+    this.overlayOpen = true;
+    try {
+      const ref = await this.dialogs.open(await component, null, { title, width });
+      ref.afterClose.subscribe(() => (this.overlayOpen = false));
+    } catch {
+      this.overlayOpen = false;
+    }
   }
 
   protected switchBranch(): void {
@@ -80,4 +127,11 @@ export class ShellComponent {
     await this.auth.logout();
     await this.router.navigate(['/login']);
   }
+}
+
+function isTyping(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }

@@ -18,6 +18,12 @@ export const ROLE_GROUPS: Record<string, PermissionGrant[]> = {
     g('ACC', 'CONDITION', ''),
     g('LED', 'CHART', ''),
   ],
+  FIELD_OFFICER: [
+    g('PTY', 'PARTY', 'AE'),
+    g('PTY', 'DOCUMENTS', 'AE'),
+    g('PTY', 'GROUPS', 'AE'),
+    g('PTY', 'CREDIT_OFFICERS', ''),
+  ],
   KYC_OFFICER: [g('PTY', null, ''), g('PTY', 'DOCUMENTS', 'E'), g('PTY', 'PARTY', 'S'), g('PTY', 'KYC', 'S')],
   SUPERVISOR: [
     g('PTY', null, 'AES'),
@@ -74,6 +80,22 @@ export const MOCK_USERS: MockUser[] = [
     secret: 'Kyc-Pass1',
     mustChange: false,
     groups: ['KYC_OFFICER'],
+  },
+  {
+    staffUserId: 6,
+    staffCode: 'FIELD1',
+    fullName: 'Efua Sarpong',
+    secret: 'Field-Pass1',
+    mustChange: false,
+    groups: ['FIELD_OFFICER'],
+  },
+  {
+    staffUserId: 7,
+    staffCode: 'AUDIT1',
+    fullName: 'Adwoa Nyarko',
+    secret: 'Audit-Pass1',
+    mustChange: false,
+    groups: ['AUDITOR'],
   },
   {
     staffUserId: 5,

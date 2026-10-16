@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { TokenResponse } from '../app/core/api/api-types';
 import { BRANCHES, HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from './data';
+import { partyHandlers } from './parties';
 
 /**
  * Mock API for development and end-to-end tests, following api/openapi.json and api/problem-types.md.
@@ -198,6 +199,8 @@ export const handlers = [
       isOpen: day?.status === 'OPEN',
     });
   }),
+
+  ...partyHandlers(base, (request) => (caller(request) ? null : ended())),
 
   http.get(`${base}/health`, () => HttpResponse.json({ status: 'ok' })),
 ];

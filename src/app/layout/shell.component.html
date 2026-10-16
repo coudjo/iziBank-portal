@@ -1,6 +1,21 @@
 <header class="topbar">
   <a class="wordmark" routerLink="/dashboard">iziBank</a>
 
+  @if (canSearch()) {
+    @if (viewport.size() === 'phone') {
+      <button type="button" class="search-icon" (click)="openSearch()">
+        <span nz-icon nzType="search" aria-hidden="true"></span>
+        <span class="ib-visually-hidden">Search customers or accounts</span>
+      </button>
+    } @else {
+      <button type="button" class="search-trigger" (click)="openSearch()" aria-keyshortcuts="/ Control+K">
+        <span nz-icon nzType="search" aria-hidden="true"></span>
+        <span class="search-text">Search customers or accounts</span>
+        <kbd aria-hidden="true">/</kbd>
+      </button>
+    }
+  }
+
   <div class="context">
     @if (branch.current(); as current) {
       <span class="context-item"><span class="context-label">Branch</span> {{ current.branchName }}</span>

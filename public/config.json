@@ -4,5 +4,6 @@
   "idleWarningSeconds": 120,
   "refreshWhenRemainingSeconds": 300,
   "activeWindowSeconds": 60,
-  "maxSessionNoticeSeconds": 600
+  "maxSessionNoticeSeconds": 600,
+  "minimumCustomerAgeYears": 18
 }

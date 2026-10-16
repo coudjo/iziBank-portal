@@ -21,7 +21,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'team',
     section: 'main',
     permission: { module: 'PTY', subModule: 'PARTY', action: 'view' },
-    placeholder: true,
     bottomBar: true,
   },
   {

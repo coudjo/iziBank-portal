@@ -1,5 +1,6 @@
 import { EnvironmentInjector, Injectable, Injector, Type, inject } from '@angular/core';
 import type { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
+import type { ConfirmOptions } from './confirm.dialog';
 
 export interface DialogOptions {
   title: string;
@@ -40,6 +41,17 @@ export class DialogService {
     return ref;
   }
 
+  /** Resolves true when the user confirms; false when they cancel, press Esc or close the dialog. */
+  async confirm(options: ConfirmOptions): Promise<boolean> {
+    const { ConfirmDialogComponent } = await import('./confirm.dialog');
+    const ref = await this.open<InstanceType<typeof ConfirmDialogComponent>, ConfirmOptions, boolean>(
+      ConfirmDialogComponent,
+      options,
+      { title: options.title },
+    );
+    return new Promise((resolve) => ref.afterClose.subscribe((result) => resolve(result === true)));
+  }
+
   closeAll(): void {
     this.modals?.closeAll();
   }
@@ -65,6 +77,8 @@ function labelDialog(element: HTMLElement | undefined): void {
     return;
   }
   dialog.setAttribute('aria-modal', 'true');
+  // Dialog content can ask for first focus with `data-autofocus` (for example the search box).
+  dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
   const title = dialog.querySelector('.ant-modal-title');
   if (title) {
     title.id ||= `ib-dialog-title-${++nextTitleId}`;

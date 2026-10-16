@@ -2,7 +2,12 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const allowed = new Set(['src/styles/tokens.css', 'src/styles/zorro-theme.less']);
+// pixel-colours.ts holds colours drawn into captured images (JPEG background, signature ink), not UI colours.
+const allowed = new Set([
+  'src/styles/tokens.css',
+  'src/styles/zorro-theme.less',
+  'src/app/shared/capture/pixel-colours.ts',
+]);
 const offenders = [];
 
 function walk(dir) {

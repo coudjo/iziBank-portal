@@ -45,6 +45,22 @@ Every error response is RFC 7807 problem details. `type` is one of the stable co
 | `business-day.date-not-after` | 409 | The date is on or before the branch's latest business day. |
 | `business-day.non-working-day` | 409 | The date is a weekend day (`Calendar:WeekendDays`) or a defined holiday. |
 | `ledger.field-locked` | 409 | Changing the type or currency of an approved ledger account. |
+| `party.duplicate-identification` | 409 | A customer already holds this identification type and number. `existingPartyNumber` names them. |
+| `party.duplicate-registration` | 409 | A business already holds this registration number. `existingPartyNumber` names it. |
+| `group.member-in-other-group` | 409 | The person is an active member of another group (D8). `memberPartyNumber` and `groupPartyNumber` say who and where. |
+| `group.chairperson-exists` | 409 | Adding or promoting a chairperson while the group already has one. |
+| `party.primary-document` | 409 | Deleting an individual's primary identification document (the one on the individual's details). |
+| `upload.empty` | 400 | The request body has no file content. |
+| `upload.too-large` | 400 | The file exceeds `Uploads:MaxImageBytes` (1 MB for signatures). `maxBytes` gives the limit. |
+| `upload.type-not-allowed` | 400 | The file's leading bytes are not an allowed type (JPEG or PNG for photos; JPEG, PNG or PDF for documents). |
+| `upload.type-mismatch` | 400 | The `Content-Type` header names a different type from the file's content (for example a PDF sent as `image/png`). |
+| `upload.dimensions` | 400 | A signature PNG is wider than 2000 or taller than 1000 pixels. `maxWidth` and `maxHeight` give the limits. |
+| `credit-officer.exists` | 409 | Designating (or re-enabling) a staff member who is already an active credit officer. |
+| `kyc.checklist-incomplete` | 409 | Verifying KYC while required checklist items are missing. `missing` lists their codes. |
+| `kyc.not-pending` | 409 | Verifying a customer whose KYC is already verified, or rejecting one already rejected. |
+| `idempotency.key-invalid` | 400 | The `Idempotency-Key` header is empty, longer than 100 characters or has spaces or control characters. |
+| `idempotency.key-reused` | 409 | The same key was used earlier by this user for a different request (route or body). |
+| `idempotency.in-progress` | 409 | The first request with this key has not finished yet. Retry shortly. |
 | `supervision.permission-denied` | 403 | No supervise permission for the record. |
 | `supervision.self-approval` | 409 | The approver created or last changed the record. |
 | `supervision.not-pending` | 409 | The record is not awaiting approval. |

@@ -4,6 +4,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import type { MeResponse, TokenResponse } from '../api/api-types';
 import { ConfigService } from '../config/config.service';
 import { PermissionService } from '../permissions/permission.service';
+import { InMemoryStores } from '../session/in-memory-stores';
 import { SignOutBroadcast } from './sign-out-broadcast';
 import { StoredToken, TokenStorage } from './token-storage';
 
@@ -14,6 +15,7 @@ export class AuthService {
   private readonly storage = inject(TokenStorage);
   private readonly permissions = inject(PermissionService);
   private readonly broadcast = inject(SignOutBroadcast);
+  private readonly stores = inject(InMemoryStores);
   private readonly base = inject(ConfigService).config.apiBaseUrl.replace(/\/$/, '');
 
   private readonly token = signal<StoredToken | null>(this.storage.read());
@@ -128,6 +130,7 @@ export class AuthService {
     this.sessionMax.set(null);
     this.tokenBranch.set(null);
     this.permissions.clear();
+    this.stores.resetAll();
     this.endedReason.set(reason);
   }
 

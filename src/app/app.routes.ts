@@ -48,6 +48,11 @@ export const routes: Routes = [
         title: 'Dashboard',
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
+      {
+        path: 'customers',
+        canMatch: [requirePermission({ module: 'PTY', subModule: 'PARTY', action: 'view' })],
+        loadChildren: () => import('./features/customers/customers.routes').then((m) => m.CUSTOMER_ROUTES),
+      },
       ...placeholders,
       ...devOnly,
       {

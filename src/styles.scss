@@ -122,3 +122,18 @@ a {
 .ant-alert-description {
   color: var(--ib-ink);
 }
+
+// Controls built on native inputs (ADR 0003) share the NG-ZORRO input look.
+.ib-input {
+  min-height: var(--ib-control-height);
+  border-color: var(--ib-border-control);
+}
+
+select.ib-input {
+  appearance: auto;
+  background-color: var(--ib-surface);
+}
+
+.ib-input[aria-invalid='true'] {
+  border-color: var(--ib-danger-text);
+}
