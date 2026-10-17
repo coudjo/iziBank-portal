@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, Type, computed, inject, isDevMode } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Type,
+  computed,
+  effect,
+  inject,
+  isDevMode,
+  untracked,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -12,6 +21,7 @@ import { SessionMonitor } from '../core/session/session-monitor';
 import { BannerComponent, DialogService, StatusChipComponent, ToastService } from '../shared/ui';
 import { SwitchBranchDialogComponent } from './switch-branch.dialog';
 import { NAV_ITEMS, NavItem } from './navigation';
+import { ApprovalsService } from '../features/approvals';
 
 /** App shell (UX 4.1): top bar, sidebar on desktop and tablet, bottom bar on phones. */
 @Component({
@@ -43,18 +53,35 @@ export class ShellComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly me = this.auth.me;
+  protected readonly approvals = inject(ApprovalsService);
+  protected readonly approvalCount = this.approvals.count;
+  protected readonly canApprove = computed(() => {
+    this.me();
+    return this.approvals.kinds().length > 0;
+  });
   protected readonly canSearch = computed(() => {
     this.me();
     return this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'view' });
   });
   private overlayOpen = false;
+
+  constructor() {
+    // Approvals badge (F3-05): load for approvers once signed in, again after a branch switch (new permissions).
+    effect(() => {
+      if (this.canApprove()) {
+        untracked(() => this.approvals.start());
+      }
+    });
+  }
   protected readonly firstName = computed(() => this.me()?.fullName.split(' ')[0] ?? '');
 
   protected readonly visible = computed(() => {
     this.me();
     return NAV_ITEMS.filter(
       (item) =>
-        (!item.placeholder || isDevMode()) && (!item.permission || this.permissions.can(item.permission)),
+        (!item.placeholder || isDevMode()) &&
+        (!item.permission || this.permissions.can(item.permission)) &&
+        (!item.approvals || this.approvals.kinds().length > 0),
     );
   });
 

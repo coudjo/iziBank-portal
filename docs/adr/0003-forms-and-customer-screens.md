@@ -94,3 +94,21 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   number (the API logs customers by number). Document, photo and signature events logged under other entity types
   do not appear there yet.
 - Regulatory attribute codes are upper snake case; a changed value is a new version, shown in History.
+
+## Approvals (F8, F3-05)
+
+- There is no "waiting for me" endpoint yet (api-requests P3). The inbox and badge are built from the lists the
+  user may approve, each behind its supervise permission:
+  - Customers (PTY/KYC supervise): `POST /parties/search` with `supervision=PENDING`, oldest first. Approving a
+    customer is KYC verify (D3), so a row opens the customer's KYC tab.
+  - Chart of accounts (LED/CHART supervise): `GET /ledger-accounts`, keeping new accounts awaiting approval and
+    accounts with a pending rename. One endpoint approves either.
+  - Security (SEC/PERMISSIONS supervise): `GET /change-requests?status=PENDING`.
+- The badge counts items the user can act on, leaving out their own requests where the API says who asked
+  (change requests, renames, ledger creators). Customer search rows do not carry the creator, so a supervisor's
+  own customers are counted until they open them. It refreshes on sign-in, branch switch, after each decision
+  and every 5 minutes.
+- The changes panel compares a change request's `before` and `proposed` JSON field by field; lists show what was
+  added and removed, and permission grants read as "PTY / PARTY: view, add".
+- Photos and accounts have no pending lists yet (api-requests P8, and A6 for accounts), so those tabs are not
+  shown. Reject on a never-approved ledger account deletes it; on a re-pended one it is not offered (UX 5.2).

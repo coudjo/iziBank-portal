@@ -36,3 +36,6 @@ export type NextOfKinRequest = Schemas['NextOfKinRequest'];
 export type RegulatoryAttributeView = Schemas['RegulatoryAttributeView'];
 export type ActivityRow = Schemas['ActivityRow'];
 export type ActivityPage = Schemas['PagedResultOfActivityRow'];
+export type ChangeRequestView = Schemas['ChangeRequestView'];
+export type LedgerAccountView = Schemas['LedgerAccountView'];
+export type LedgerAccountPage = Schemas['PagedResultOfLedgerAccountView'];

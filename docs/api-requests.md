@@ -34,3 +34,12 @@ Starting list: frontend plan section 11 and UX design section 9.
 | --- | -------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | P6  | KYC status history (who verified or rejected, when, why) | KYC tab "status history" (UX 7.3) | `GET /parties/{id}/kyc/history`, or log KYC and supervision events with `entityType=Party` and the number, as now, and expose them to KYC officers without audit permission |
 | P7  | Document type names on document summaries                | Documents tab, viewer labels      | Add `documentTypeName` to `DocumentSummary` (the portal maps codes through the lookup for now)                                                                              |
+
+## Notes from F8 (2026-10-17)
+
+| #   | Need                                                                        | Used by                                               | Suggested change                                                                                   |
+| --- | --------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| P3  | (still open) One count, and ideally one list, of what this user can approve | Approvals badge and inbox                             | `GET /approvals/pending` with type, record, requested by and when; excludes the caller's own items |
+| P8  | Photos and signatures awaiting approval                                     | Approvals inbox Photos tab (UX 6.6)                   | `GET /parties/pending-images` or a filter on search                                                |
+| P9  | Who created a customer, on search rows                                      | Inbox "who created it" column; four-eyes in the badge | Add `createdByUserId` and `createdByName` to `PartySearchRow`                                      |
+| P10 | When a ledger account was created                                           | Inbox "when" and age for new ledger accounts          | Add `createdOn` to `LedgerAccountView`                                                             |

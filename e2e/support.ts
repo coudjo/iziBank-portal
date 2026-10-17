@@ -44,3 +44,14 @@ export function isPhone(info: TestInfo): boolean {
 export async function openUserMenu(page: Page): Promise<void> {
   await page.getByRole('button', { name: /Account menu/ }).click();
 }
+
+/** The seeded administrator must change the password at first sign-in (F2-05). */
+export async function signInAdmin(page: Page): Promise<void> {
+  await signIn(page, USERS.admin);
+  await expect(page).toHaveURL(/\/change-password$/);
+  await page.getByRole('textbox', { name: /^Current password/ }).fill(USERS.admin.secret);
+  await page.getByRole('textbox', { name: /^New password/ }).fill('Admin-Pass2');
+  await page.getByRole('textbox', { name: /^Confirm new password/ }).fill('Admin-Pass2');
+  await page.getByRole('button', { name: 'Change password' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+}

@@ -171,3 +171,79 @@ select.ib-input {
   outline: 2px solid var(--ib-focus);
   outline-offset: -2px;
 }
+
+// Shell top bar pieces (kept global so the shell's own styles stay within the component budget).
+
+.ib-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--ib-space-2);
+  flex: 0 1 22rem;
+  min-width: 0;
+  min-height: var(--ib-control-height);
+  padding: 0 var(--ib-space-3);
+  font: inherit;
+  color: var(--ib-ink-muted);
+  background: var(--ib-surface-subtle);
+  border: 1px solid var(--ib-border-control);
+  border-radius: var(--ib-radius-sm);
+  cursor: text;
+  text-align: left;
+}
+
+.ib-search-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ib-search-trigger kbd {
+  padding: 0 6px;
+  border: 1px solid var(--ib-border-control);
+  border-radius: var(--ib-radius-sm);
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--ib-surface);
+}
+
+.ib-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ib-touch-target);
+  height: var(--ib-touch-target);
+  font-size: 18px;
+  color: var(--ib-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ib-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: var(--ib-space-1);
+  border-radius: 10px;
+  background: var(--ib-accent);
+  color: var(--ib-ink);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ib-approvals-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ib-space-1);
+  min-height: var(--ib-touch-target);
+  padding: 0 var(--ib-space-2);
+  color: var(--ib-primary);
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+}

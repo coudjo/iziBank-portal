@@ -3,17 +3,27 @@
 
   @if (canSearch()) {
     @if (viewport.size() === 'phone') {
-      <button type="button" class="search-icon" (click)="openSearch()">
+      <button type="button" class="ib-search-icon" (click)="openSearch()">
         <span nz-icon nzType="search" aria-hidden="true"></span>
         <span class="ib-visually-hidden">Search customers or accounts</span>
       </button>
     } @else {
-      <button type="button" class="search-trigger" (click)="openSearch()" aria-keyshortcuts="/ Control+K">
+      <button type="button" class="ib-search-trigger" (click)="openSearch()" aria-keyshortcuts="/ Control+K">
         <span nz-icon nzType="search" aria-hidden="true"></span>
-        <span class="search-text">Search customers or accounts</span>
+        <span class="ib-search-text">Search customers or accounts</span>
         <kbd aria-hidden="true">/</kbd>
       </button>
     }
+  }
+
+  @if (canApprove() && viewport.size() !== 'phone') {
+    <a class="ib-approvals-link" routerLink="/approvals">
+      <span nz-icon nzType="check-square" aria-hidden="true"></span>
+      <span>Approvals</span>
+      @if (approvalCount() > 0) {
+        <span class="ib-badge">{{ approvalCount() }}<span class="ib-visually-hidden"> waiting</span></span>
+      }
+    </a>
   }
 
   <div class="context">
@@ -93,6 +103,11 @@
             >
               <span nz-icon [nzType]="item.icon" aria-hidden="true"></span>
               <span class="nav-label">{{ item.label }}</span>
+              @if (item.approvals && approvalCount() > 0) {
+                <span class="ib-badge" data-testid="approvals-badge"
+                  >{{ approvalCount() }}<span class="ib-visually-hidden"> waiting</span></span
+                >
+              }
             </a>
           </li>
         }
@@ -138,6 +153,11 @@
       <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
         <span nz-icon [nzType]="item.icon" aria-hidden="true"></span>
         <span>{{ item.label }}</span>
+        @if (item.approvals && approvalCount() > 0) {
+          <span class="ib-badge" data-testid="approvals-badge"
+            >{{ approvalCount() }}<span class="ib-visually-hidden"> waiting</span></span
+          >
+        }
       </a>
     }
     <button

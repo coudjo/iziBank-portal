@@ -10,6 +10,8 @@ export interface NavItem {
   placeholder?: boolean;
   /** Shown in the phone bottom bar. */
   bottomBar?: boolean;
+  /** Shown only to people who can approve something (approvals inbox and badge). */
+  approvals?: boolean;
 }
 
 /** The single source for the sidebar, the bottom bar and the route permissions (frontend plan 3.1). */
@@ -30,6 +32,14 @@ export const NAV_ITEMS: readonly NavItem[] = [
     section: 'main',
     permission: { module: 'ACC', subModule: 'ACCOUNT', action: 'view' },
     placeholder: true,
+    bottomBar: true,
+  },
+  {
+    label: 'Approvals',
+    path: '/approvals',
+    icon: 'check-square',
+    section: 'main',
+    approvals: true,
     bottomBar: true,
   },
   {

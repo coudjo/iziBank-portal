@@ -1,6 +1,7 @@
 import { isDevMode } from '@angular/core';
 import { Routes } from '@angular/router';
 import { changePasswordGuard, guestGuard, requirePermission, signedInGuard } from './core/auth/auth.guards';
+import { canApprove } from './features/approvals/can-approve.guard';
 import { NAV_ITEMS } from './layout/navigation';
 
 const placeholders: Routes = isDevMode()
@@ -52,6 +53,11 @@ export const routes: Routes = [
         path: 'customers',
         canMatch: [requirePermission({ module: 'PTY', subModule: 'PARTY', action: 'view' })],
         loadChildren: () => import('./features/customers/customers.routes').then((m) => m.CUSTOMER_ROUTES),
+      },
+      {
+        path: 'approvals',
+        canMatch: [canApprove],
+        loadChildren: () => import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),
       },
       ...placeholders,
       ...devOnly,
