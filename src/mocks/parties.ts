@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { Profile, kycHandlers, photoView, profileOf, signatureView } from './kyc';
 import { organisationHandlers } from './organisations';
 import type {
   BeneficialOwnerView,
@@ -67,7 +68,7 @@ export const CREDIT_OFFICERS = [
   },
 ];
 
-interface MockParty {
+export interface MockParty {
   detail: PartyDetail;
   creditOfficerId: number | null;
   hasPhoto: boolean;
@@ -76,6 +77,8 @@ interface MockParty {
   hasSignature: boolean;
   owners?: { ownerPartyId: number; ownershipPercentage: number }[];
   members?: GroupMemberView[];
+  /** Detailed KYC state, created from the flags above on first use (see kyc.ts). */
+  profile?: Profile;
 }
 
 interface PartyState {
@@ -141,7 +144,7 @@ function individual(
 
 function seed(): PartyState {
   return {
-    next: 106,
+    next: 107,
     parties: [
       individual(
         101,
@@ -175,6 +178,17 @@ function seed(): PartyState {
           createdOn: '2026-10-12T08:30:00Z',
         },
         { hasPhoto: true },
+      ),
+      individual(
+        106,
+        'Kwame',
+        'Asante',
+        {
+          idNumber: 'GHA-700000006-6',
+          mobile: '+233244000106',
+          createdOn: '2026-10-13T10:00:00Z',
+        },
+        { hasPhoto: true, hasDocumentImage: true, nextOfKin: 1 },
       ),
       {
         creditOfficerId: null,
@@ -730,8 +744,13 @@ export function addMember(
 }
 
 /** Handlers; `signedIn` returns a problem response when there is no session. */
-export function partyHandlers(base: string, signedIn: (request: Request) => Response | null) {
+export function partyHandlers(
+  base: string,
+  signedIn: (request: Request) => Response | null,
+  who: (request: Request) => number | null,
+) {
   return [
+    ...kycHandlers(base, signedIn, who),
     http.get(`${base}/lookups/genders`, ({ request }) => signedIn(request) ?? HttpResponse.json(GENDERS)),
     http.get(
       `${base}/lookups/identification-document-types`,
@@ -805,18 +824,9 @@ export function partyHandlers(base: string, signedIn: (request: Request) => Resp
           isComplete: items.every((item) => item.done || !item.requiredForKyc),
           items,
         },
-        photo: {
-          hasPhoto: party.hasPhoto,
-          supervisionState: party.hasPhoto ? 'APPROVED' : null,
-          capturedOn: null,
-          capturedByUserId: null,
-          supervisedByUserId: null,
-        },
-        signature:
-          party.detail.partyTypeCode === 'INDIVIDUAL'
-            ? { hasEffective: party.hasSignature, effective: null, pending: null }
-            : null,
-        documentCount: party.detail.partyTypeCode === 'INDIVIDUAL' ? 1 : 0,
+        photo: photoView(party),
+        signature: party.detail.partyTypeCode === 'INDIVIDUAL' ? signatureView(party) : null,
+        documentCount: profileOf(party).documents.length,
         nextOfKinCount: party.nextOfKin,
         creditOfficerName:
           CREDIT_OFFICERS.find((officer) => officer.creditOfficerId === party.creditOfficerId)?.fullName ??

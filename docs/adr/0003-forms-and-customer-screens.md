@@ -76,3 +76,21 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   not say which group someone is in (api-requests P4).
 - The raw initial-bundle warning budget is 800 kB (was 750 kB). The plan's limit is 250 kB gzipped for the sign-in
   page; the initial transfer is about 156 kB. Features stay lazy.
+
+## KYC, documents and profile tabs (F7)
+
+- Verify and approve is one call (`POST /parties/{id}/kyc/verify`, ADR D3). It is disabled with the reason in text
+  when required checklist items are missing, or when the viewer created or last changed the customer (four-eyes).
+  The API stays the authority: with `Supervision:AllowSelfApproval` on, the portal still applies four-eyes.
+- Photo and signature approval use PTY/PARTY supervise; capture uses PTY/DOCUMENTS edit; documents use
+  PTY/DOCUMENTS add and edit, matching the API's endpoint permissions.
+- The viewer (`ib-file-viewer`) fetches each file only when shown, as a blob URL revoked on change or close. PDFs
+  open in an iframe with `sandbox="allow-scripts"` (some browser PDF viewers need scripts; same-origin is not
+  granted). Only `application/pdf` blobs go into the frame.
+- `UploadTask` keeps the captured file and the request, so Retry sends the same `Idempotency-Key`. A refused file
+  (wrong type, too large) is not offered for retry; it needs a new capture.
+- When a new document's image upload fails, the document stays and the row opens for the image retry.
+- The Activity tab needs SEC/AUDIT view and filters `GET /audit/activity` by `entityType=Party` and the customer
+  number (the API logs customers by number). Document, photo and signature events logged under other entity types
+  do not appear there yet.
+- Regulatory attribute codes are upper snake case; a changed value is a new version, shown in History.

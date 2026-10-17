@@ -27,3 +27,10 @@ Starting list: frontend plan section 11 and UX design section 9.
 | --- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | P4  | Search rows say which active group a person is in | Group member and chairperson pickers (UX 6.4 step 4: "Already in group [name]" shown disabled) | Add `activeGroupPartyNumber` and `activeGroupName` to `PartySearchRow` |
 | P5  | Search finds a business by registration number    | Business Check now after a lost create (UX 3.1)                                                | Include `BusinessDetail.RegistrationNumber` in the indexed matches     |
+
+## Notes from F7 (2026-10-16)
+
+| #   | Need                                                     | Used by                           | Suggested change                                                                                                                                                            |
+| --- | -------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P6  | KYC status history (who verified or rejected, when, why) | KYC tab "status history" (UX 7.3) | `GET /parties/{id}/kyc/history`, or log KYC and supervision events with `entityType=Party` and the number, as now, and expose them to KYC officers without audit permission |
+| P7  | Document type names on document summaries                | Documents tab, viewer labels      | Add `documentTypeName` to `DocumentSummary` (the portal maps codes through the lookup for now)                                                                              |

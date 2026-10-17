@@ -2,12 +2,22 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type {
+  ActivityPage,
   BeneficialOwnerView,
   CreateBusinessRequest,
   CreateGroupRequest,
   CreateIndividualRequest,
   CreatedParty,
   CreditOfficerView,
+  DocumentDetail,
+  DocumentRequest,
+  DocumentSummary,
+  KycChecklist,
+  NextOfKinRequest,
+  NextOfKinView,
+  PhotoView,
+  RegulatoryAttributeView,
+  SignatureView,
   GroupMemberView,
   MemberRequest,
   OwnerShareRequest,
@@ -99,5 +109,137 @@ export class CustomersClient {
         groupMemberRoleId,
       }),
     );
+  }
+
+  checklist(partyId: number): Promise<KycChecklist> {
+    return firstValueFrom(this.http.get<KycChecklist>(`${this.base}/parties/${partyId}/kyc/checklist`));
+  }
+
+  /** KYC verify is also the approval of the customer record (ADR D3). */
+  verifyKyc(partyId: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/kyc/verify`, null));
+  }
+
+  rejectKyc(partyId: number, reason: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/kyc/reject`, { reason }));
+  }
+
+  documents(partyId: number): Promise<DocumentSummary[]> {
+    return firstValueFrom(this.http.get<DocumentSummary[]>(`${this.base}/parties/${partyId}/documents`));
+  }
+
+  document(partyId: number, documentId: number): Promise<DocumentDetail> {
+    return firstValueFrom(
+      this.http.get<DocumentDetail>(`${this.base}/parties/${partyId}/documents/${documentId}`),
+    );
+  }
+
+  addDocument(partyId: number, request: DocumentRequest): Promise<{ id: number }> {
+    return firstValueFrom(
+      this.http.post<{ id: number }>(`${this.base}/parties/${partyId}/documents`, request),
+    );
+  }
+
+  updateDocument(partyId: number, documentId: number, request: DocumentRequest): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(`${this.base}/parties/${partyId}/documents/${documentId}`, request),
+    );
+  }
+
+  deleteDocument(partyId: number, documentId: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.base}/parties/${partyId}/documents/${documentId}`));
+  }
+
+  /** Images are fetched only when someone opens them (UX 5.5), as a Blob kept in memory. */
+  documentImage(partyId: number, documentId: number): Promise<Blob> {
+    return this.blob(`parties/${partyId}/documents/${documentId}/image`);
+  }
+
+  photo(partyId: number): Promise<PhotoView> {
+    return firstValueFrom(this.http.get<PhotoView>(`${this.base}/parties/${partyId}/photo`));
+  }
+
+  photoImage(partyId: number): Promise<Blob> {
+    return this.blob(`parties/${partyId}/photo/image`);
+  }
+
+  approvePhoto(partyId: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/photo/supervise`, null));
+  }
+
+  rejectPhoto(partyId: number, reason: string | null): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/photo/reject`, { reason }));
+  }
+
+  signature(partyId: number): Promise<SignatureView> {
+    return firstValueFrom(this.http.get<SignatureView>(`${this.base}/parties/${partyId}/signature`));
+  }
+
+  signatureImage(partyId: number, pending: boolean): Promise<Blob> {
+    return this.blob(`parties/${partyId}/signature/image?pending=${pending}`);
+  }
+
+  approveSignature(partyId: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/signature/supervise`, null));
+  }
+
+  rejectSignature(partyId: number, reason: string | null): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.base}/parties/${partyId}/signature/reject`, { reason }),
+    );
+  }
+
+  nextOfKin(partyId: number): Promise<NextOfKinView[]> {
+    return firstValueFrom(this.http.get<NextOfKinView[]>(`${this.base}/parties/${partyId}/next-of-kin`));
+  }
+
+  addNextOfKin(partyId: number, request: NextOfKinRequest): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.base}/parties/${partyId}/next-of-kin`, request));
+  }
+
+  updateNextOfKin(partyId: number, id: number, request: NextOfKinRequest): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.base}/parties/${partyId}/next-of-kin/${id}`, request));
+  }
+
+  deleteNextOfKin(partyId: number, id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.base}/parties/${partyId}/next-of-kin/${id}`));
+  }
+
+  attributes(partyId: number): Promise<RegulatoryAttributeView[]> {
+    return firstValueFrom(
+      this.http.get<RegulatoryAttributeView[]>(`${this.base}/parties/${partyId}/regulatory-attributes`),
+    );
+  }
+
+  attributeHistory(partyId: number, code: string): Promise<RegulatoryAttributeView[]> {
+    return firstValueFrom(
+      this.http.get<RegulatoryAttributeView[]>(
+        `${this.base}/parties/${partyId}/regulatory-attributes/${encodeURIComponent(code)}/history`,
+      ),
+    );
+  }
+
+  setAttribute(partyId: number, code: string, attributeValue: string | null): Promise<void> {
+    return firstValueFrom(
+      this.http.put<void>(
+        `${this.base}/parties/${partyId}/regulatory-attributes/${encodeURIComponent(code)}`,
+        {
+          attributeValue,
+        },
+      ),
+    );
+  }
+
+  /** The activity log for one customer (SEC/AUDIT view). The API logs customers by customer number. */
+  activity(partyNumber: string, page: number, pageSize: number): Promise<ActivityPage> {
+    return firstValueFrom(
+      this.http.get<ActivityPage>(`${this.base}/audit/activity`, {
+        params: { entityType: 'Party', entityId: partyNumber, page, pageSize },
+      }),
+    );
+  }
+
+  private blob(path: string): Promise<Blob> {
+    return firstValueFrom(this.http.get(`${this.base}/${path}`, { responseType: 'blob' }));
   }
 }

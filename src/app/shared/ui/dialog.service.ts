@@ -1,6 +1,8 @@
 import { EnvironmentInjector, Injectable, Injector, Type, inject } from '@angular/core';
 import type { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import type { ConfirmOptions } from './confirm.dialog';
+import type { ViewerItem } from './file-viewer.component';
+import type { ReasonOptions } from './reason.dialog';
 
 export interface DialogOptions {
   title: string;
@@ -50,6 +52,23 @@ export class DialogService {
       { title: options.title },
     );
     return new Promise((resolve) => ref.afterClose.subscribe((result) => resolve(result === true)));
+  }
+
+  /** Resolves with the reason, or null when the user cancels. */
+  async reason(options: ReasonOptions): Promise<string | null> {
+    const { ReasonDialogComponent } = await import('./reason.dialog');
+    const ref = await this.open<InstanceType<typeof ReasonDialogComponent>, ReasonOptions, string>(
+      ReasonDialogComponent,
+      options,
+      { title: options.title },
+    );
+    return new Promise((resolve) => ref.afterClose.subscribe((result) => resolve(result ?? null)));
+  }
+
+  /** Opens files in the viewer overlay. */
+  async view(title: string, items: readonly ViewerItem[], start = 0): Promise<void> {
+    const { FileViewerDialogComponent } = await import('./file-viewer.dialog');
+    await this.open(FileViewerDialogComponent, { items, start }, { title, width: 820 });
   }
 
   closeAll(): void {

@@ -10,7 +10,13 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,
   reporter: [['list']],
-  use: { baseURL: 'http://localhost:4200', trace: 'retain-on-failure', launchOptions },
+  // Reduced motion: the app then drops its animations (styles.scss), so axe never scans a half-faded toast.
+  use: {
+    baseURL: 'http://localhost:4200',
+    trace: 'retain-on-failure',
+    reducedMotion: 'reduce',
+    launchOptions,
+  },
   projects: [
     { name: 'desktop', use: { viewport: { width: 1366, height: 768 } } },
     { name: 'tablet', use: { viewport: { width: 820, height: 1180 }, hasTouch: true } },

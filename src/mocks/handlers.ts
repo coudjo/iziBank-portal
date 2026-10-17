@@ -200,7 +200,11 @@ export const handlers = [
     });
   }),
 
-  ...partyHandlers(base, (request) => (caller(request) ? null : ended())),
+  ...partyHandlers(
+    base,
+    (request) => (caller(request) ? null : ended()),
+    (request) => caller(request)?.staffUserId ?? null,
+  ),
 
   http.get(`${base}/health`, () => HttpResponse.json({ status: 'ok' })),
 ];

@@ -7,7 +7,8 @@ import {
   input,
   untracked,
 } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { PermissionService } from '../../core/permissions/permission.service';
 import { messageFor } from '../../core/errors/error-catalog';
 import { BannerComponent, ButtonComponent, StatusChipComponent, TabsComponent } from '../../shared/ui';
 import { approvalCode, partyTypeLabel } from './customer-labels';
@@ -20,7 +21,7 @@ export const CREATED_STATE = 'ibCreated';
 /** Customer record: header, tabs and the open tab (UX 7.3, frontend plan 7.5, F5-04). */
 @Component({
   selector: 'ib-customer-record-page',
-  imports: [RouterOutlet, BannerComponent, ButtonComponent, StatusChipComponent, TabsComponent],
+  imports: [RouterOutlet, RouterLink, BannerComponent, ButtonComponent, StatusChipComponent, TabsComponent],
   providers: [CustomerRecordStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -80,6 +81,16 @@ export const CREATED_STATE = 'ibCreated';
       margin: var(--ib-space-2) 0 0;
       color: var(--ib-ink-muted);
     }
+    .actions {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--ib-space-2);
+    }
+    .verify {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 550;
+    }
     .logged {
       margin: 0 0 var(--ib-space-3);
       color: var(--ib-ink-meta);
@@ -119,6 +130,11 @@ export const CREATED_STATE = 'ibCreated';
           <p class="meta">Credit officer: {{ store.overview()?.creditOfficerName ?? 'None assigned' }}</p>
         }
       </div>
+      @if (canVerify()) {
+        <div class="actions">
+          <a class="ant-btn ant-btn-primary verify" routerLink="kyc">Verify KYC</a>
+        </div>
+      }
     </div>
 
     @if (store.party()) {
@@ -141,7 +157,19 @@ export class CustomerRecordPage {
   protected readonly store = inject(CustomerRecordStore);
   protected readonly created = inject(Router).currentNavigation()?.extras.state?.[CREATED_STATE] === true;
 
-  protected readonly tabs = computed(() => tabsFor(this.store.party()?.partyTypeCode ?? 'INDIVIDUAL'));
+  private readonly permissions = inject(PermissionService);
+  protected readonly tabs = computed(() =>
+    tabsFor(this.store.party()?.partyTypeCode ?? 'INDIVIDUAL', (rule) => this.permissions.can(rule)),
+  );
+  /** UX 7.3 header: Verify KYC for KYC officers while the customer still needs it. */
+  protected readonly canVerify = computed(() => {
+    const party = this.store.party();
+    return (
+      !!party &&
+      this.permissions.can({ module: 'PTY', subModule: 'KYC', action: 'supervise' }) &&
+      (party.effectiveKycStatusCode !== 'VERIFIED' || party.supervisionState === 'PENDING')
+    );
+  });
   protected readonly problemMessage = computed(() => {
     const problem = this.store.problem();
     // A sensitive read the API refused because it could not log it (frontend plan 7.5).

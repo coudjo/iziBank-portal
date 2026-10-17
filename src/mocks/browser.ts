@@ -1,5 +1,6 @@
 import { setupWorker } from 'msw/browser';
 import { endSessions, handlers, setBusinessDay } from './handlers';
+import { failNextUpload } from './kyc';
 import { dropNextCreate, resetParties, setOverviewFailure } from './parties';
 
 export const worker = setupWorker(...handlers);
@@ -11,4 +12,5 @@ export const worker = setupWorker(...handlers);
   setOverviewFailure,
   dropNextCreate,
   resetParties,
+  failNextUpload,
 };

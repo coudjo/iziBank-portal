@@ -5,6 +5,7 @@ export { CardDirective, ColumnDirective, DataTableComponent, EmptyDirective } fr
 export { DateInputComponent } from './date-input.component';
 export { EmptyStateComponent } from './empty-state.component';
 export { ErrorSummaryComponent } from './error-summary.component';
+export { FileViewerComponent, type ViewerItem } from './file-viewer.component';
 export { FormControlDirective, FormFieldComponent } from './form-field.component';
 export { IconComponent } from './icon.component';
 export { InputDirective } from './input.directive';
