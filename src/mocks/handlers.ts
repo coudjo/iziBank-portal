@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { TokenResponse } from '../app/core/api/api-types';
 import { BRANCHES, HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from './data';
+import { accountHandlers } from './accounts';
 import { approvalHandlers } from './approvals';
 import { partyHandlers } from './parties';
 
@@ -202,6 +203,11 @@ export const handlers = [
   }),
 
   ...partyHandlers(
+    base,
+    (request) => (caller(request) ? null : ended()),
+    (request) => caller(request)?.staffUserId ?? null,
+  ),
+  ...accountHandlers(
     base,
     (request) => (caller(request) ? null : ended()),
     (request) => caller(request)?.staffUserId ?? null,

@@ -90,6 +90,12 @@ export const CUSTOMER_ROUTES: Routes = [
         loadComponent: () => import('./next-of-kin.tab').then((m) => m.CustomerNextOfKinTab),
       },
       {
+        path: 'accounts',
+        title: 'Customer',
+        canMatch: [requirePermission({ module: 'ACC', subModule: 'ACCOUNT', action: 'view' })],
+        loadComponent: () => import('./accounts.tab').then((m) => m.CustomerAccountsTab),
+      },
+      {
         path: 'regulatory',
         title: 'Customer',
         canDeactivate: [unsavedChangesGuard],

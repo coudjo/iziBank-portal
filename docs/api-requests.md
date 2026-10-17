@@ -43,3 +43,11 @@ Starting list: frontend plan section 11 and UX design section 9.
 | P8  | Photos and signatures awaiting approval                                     | Approvals inbox Photos tab (UX 6.6)                   | `GET /parties/pending-images` or a filter on search                                                |
 | P9  | Who created a customer, on search rows                                      | Inbox "who created it" column; four-eyes in the badge | Add `createdByUserId` and `createdByName` to `PartySearchRow`                                      |
 | P10 | When a ledger account was created                                           | Inbox "when" and age for new ledger accounts          | Add `createdOn` to `LedgerAccountView`                                                             |
+
+## Notes from F9 (2026-10-17)
+
+| #   | Need                                            | Used by                                              | Suggested change                                                                                    |
+| --- | ----------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| P11 | Who opened an account, on account list rows     | Approvals inbox Accounts tab: four-eyes in the badge | Add `openedByUserId` and `openedByName` to `AccountListRow`                                         |
+| P12 | Accounts in the global search                   | Global search overlay (UX 4.1)                       | None needed: `POST /accounts/search` serves it; the overlay change is portal work (F9 follow-up)    |
+| P13 | Eligibility of a group's members as signatories | Open account, group signatories                      | Add `hasEffectiveSignature`, KYC and approval state to `GroupMemberView` (the portal searches each) |

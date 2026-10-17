@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { KycChecklistItem } from '../../core/api/api-types';
-import { IconComponent } from '../../shared/ui';
+import { IconComponent, StatusChipComponent } from '../../shared/ui';
 import { CHECKLIST_TABS } from './customer-labels';
 import { CustomerRecordStore } from './customer-record.store';
 import { hasTab } from './customer-tabs';
@@ -9,7 +9,7 @@ import { hasTab } from './customer-tabs';
 /** Overview tab: the Complete the profile card and accounts held (UX 6.2 steps 3 and 4, 7.3; F5-04). */
 @Component({
   selector: 'ib-customer-overview-tab',
-  imports: [RouterLink, IconComponent],
+  imports: [RouterLink, IconComponent, StatusChipComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     :host {
@@ -114,6 +114,17 @@ import { hasTab } from './customer-tabs';
         <h2 id="accounts-title">Accounts held</h2>
         @if (overview.accounts.length === 0) {
           <p class="empty">No accounts yet.</p>
+        } @else {
+          <ul aria-label="Accounts held">
+            @for (account of overview.accounts; track account.accountId) {
+              <li>
+                <span class="label"
+                  ><span class="ib-num">{{ account.accountNumber }}</span> {{ account.productName }}</span
+                >
+                <ib-status-chip domain="account" [code]="account.status" />
+              </li>
+            }
+          </ul>
         }
       </section>
     }

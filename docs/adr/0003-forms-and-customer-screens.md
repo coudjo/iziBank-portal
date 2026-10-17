@@ -112,3 +112,28 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   added and removed, and permission grants read as "PTY / PARTY: view, add".
 - Photos and accounts have no pending lists yet (api-requests P8, and A6 for accounts), so those tabs are not
   shown. Reject on a never-approved ledger account deletes it; on a re-pended one it is not offered (UX 5.2).
+
+## Accounts (F9)
+
+- Account search goes to `POST /accounts/search` with the term in the body (API ADR A5-p). The list keeps its
+  filters on the page only.
+- The record has Summary, Holders, Balance and holds (ACC/CONDITION view), Conditions, Classification
+  (ACC/CLASSIFICATION view) and Activity (SEC/AUDIT view). The Actions menu lists only what the user may do in the
+  account's state: hold and release, freeze and unfreeze, dormancy (ACC/CONDITION edit), close (ACC/ACCOUNT
+  delete). Nothing is offered on a pending or closed account. Reminders (ACC/ACCOUNT edit) and classifications are
+  inline.
+- Hold and release show the available balance after the change before the user confirms. Each dialog uses one
+  `Idempotency-Key`, so a second press after a timeout cannot hold twice. Opening an account keeps its key after a
+  lost connection and takes a new one otherwise.
+- Close shows the API's close checks; the confirm button stays disabled until they pass and the typed account
+  number matches.
+- An account waiting for approval shows the approval bar on its record (ACC/ACCOUNT supervise), like customers
+  are approved on their KYC tab. The inbox lists this branch's pending accounts (approval needs the account's
+  branch). Without the opener on list rows (api-requests P11) a supervisor's own accounts are counted until they
+  open them; the record applies four-eyes.
+- Open account is one page in three sections. The holder picker shows why a customer cannot take a role (awaiting
+  approval, not verified, no specimen signature) with an Open customer link. A group's signatories are chosen from
+  its active members. The page is disabled while the business day is closed, and on a phone it first suggests a
+  larger screen with "Continue anyway" (UX 3). The customer record's Open account passes the customer as router
+  state, never in the URL.
+- Balances read zero until the transactions phase; the card says "No transactions yet".

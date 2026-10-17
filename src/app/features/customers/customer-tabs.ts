@@ -21,7 +21,13 @@ export const CUSTOMER_TABS: readonly TabDefinition[] = [
   { label: 'Next of kin', path: 'next-of-kin', types: ['INDIVIDUAL', 'BUSINESS'], built: true },
   { label: 'Beneficial owners', path: 'owners', types: ['BUSINESS'], built: true },
   { label: 'Members', path: 'members', types: ['GROUP'], built: true },
-  { label: 'Accounts', path: 'accounts', types: ALL, built: false },
+  {
+    label: 'Accounts',
+    path: 'accounts',
+    types: ALL,
+    built: true,
+    permission: { module: 'ACC', subModule: 'ACCOUNT', action: 'view' },
+  },
   { label: 'Regulatory', path: 'regulatory', types: ALL, built: true },
   {
     label: 'Activity',

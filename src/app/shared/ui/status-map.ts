@@ -61,6 +61,12 @@ export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, S
       label: 'Awaiting approval',
       explanation: 'The account cannot be used until a supervisor approves it.',
     },
+    PENDING_SUPERVISION: {
+      family: 'warning',
+      icon: 'clock-circle',
+      label: 'Awaiting approval',
+      explanation: 'The account cannot be used until a supervisor approves it.',
+    },
     ACTIVE: {
       family: 'success',
       icon: 'check-circle',
@@ -71,19 +77,19 @@ export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, S
       family: 'danger',
       icon: 'stop',
       label: 'Frozen',
-      explanation: 'Debits are blocked until the freeze is released.',
+      explanation: 'Debits are blocked until a supervisor unfreezes the account.',
     },
     DORMANT: {
       family: 'neutral',
       icon: 'minus-circle',
       label: 'Dormant',
-      explanation: 'No customer activity for the dormancy period.',
+      explanation: 'The account has been marked dormant. A supervisor can reactivate it.',
     },
     CLOSED: {
       family: 'neutral',
       icon: 'minus-circle',
       label: 'Closed',
-      explanation: 'The account is closed.',
+      explanation: 'The account is closed and cannot be changed.',
     },
   },
   businessDay: {

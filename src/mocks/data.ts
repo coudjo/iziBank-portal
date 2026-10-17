@@ -14,7 +14,8 @@ const g = (moduleCode: string, subModuleCode: string | null, flags: string): Per
 export const ROLE_GROUPS: Record<string, PermissionGrant[]> = {
   TELLER: [
     g('PTY', 'PARTY', 'A'),
-    g('ACC', 'ACCOUNT', 'A'),
+    g('ACC', 'PRODUCT', ''),
+    g('ACC', 'ACCOUNT', 'AE'),
     g('ACC', 'CONDITION', ''),
     g('LED', 'CHART', ''),
   ],
@@ -28,6 +29,7 @@ export const ROLE_GROUPS: Record<string, PermissionGrant[]> = {
   SUPERVISOR: [
     g('PTY', null, 'AES'),
     g('ACC', null, 'AES'),
+    g('ACC', 'ACCOUNT', 'D'),
     g('ACC', 'CONDITION', 'ES'),
     g('REF', 'CALENDAR', 'E'),
     g('LED', 'CHART', 'AS'),

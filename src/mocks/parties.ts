@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { Profile, kycHandlers, photoView, profileOf, signatureView } from './kyc';
+import { accountsHeldBy } from './accounts';
 import { organisationHandlers } from './organisations';
 import type {
   BeneficialOwnerView,
@@ -144,7 +145,7 @@ function individual(
 
 function seed(): PartyState {
   return {
-    next: 107,
+    next: 108,
     parties: [
       individual(
         101,
@@ -189,6 +190,21 @@ function seed(): PartyState {
           createdOn: '2026-10-13T10:00:00Z',
         },
         { hasPhoto: true, hasDocumentImage: true, nextOfKin: 1 },
+      ),
+      individual(
+        107,
+        'Adjoa',
+        'Boakye',
+        {
+          idNumber: 'GHA-700000007-7',
+          mobile: '+233244000107',
+          kycStatusCode: 'VERIFIED',
+          effectiveKycStatusCode: 'VERIFIED',
+          supervisionState: 'APPROVED',
+          supervisedByUserId: 3,
+          createdOn: '2026-09-03T09:00:00Z',
+        },
+        { hasPhoto: true, hasDocumentImage: true, nextOfKin: 1, hasSignature: true },
       ),
       {
         creditOfficerId: null,
@@ -840,7 +856,7 @@ export function partyHandlers(
                 partyTypeCode: 'GROUP',
               }
             : null)(activeGroupOf(party.detail.partyId, null)),
-        accounts: [],
+        accounts: accountsHeldBy(party.detail.partyId),
       };
       return HttpResponse.json(overview);
     }),

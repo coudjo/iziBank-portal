@@ -74,6 +74,24 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   'idempotency.key-invalid': 'Something went wrong. Try again.',
   'idempotency.key-reused': 'This was already sent with different details. Start again.',
   'idempotency.in-progress': 'The first attempt is still being processed. Wait a moment, then check again.',
+  'currency.local-in-use': 'Products already exist, so the local currency can no longer change.',
+  'product.code-taken': 'A product with this code already exists.',
+  'product.field-locked': 'The type, account prefix and currency cannot change once the product is approved.',
+  'product.rate-overlap':
+    'This rate overlaps another rate of the same type and amount band. Change the dates or the band.',
+  'product.rate-started': 'This rate has started. Close it and add a new rate instead.',
+  'account.product-not-openable': 'Accounts cannot be opened on this product. Choose another product.',
+  'account.holder-not-ready': 'Every holder must be approved and KYC verified first ({numbers}).',
+  'account.signature-missing':
+    'Everyone who signs needs an approved specimen signature. Capture specimen signature first ({numbers}).',
+  'account.limit-reached': 'This customer already has the most accounts allowed on this product.',
+  'account.closed': 'This account is closed and cannot be changed.',
+  'account.already-frozen': 'This account is already frozen.',
+  'account.not-frozen': 'This account is not frozen.',
+  'account.already-dormant': 'This account is already dormant.',
+  'account.not-dormant': 'This account is not dormant.',
+  'account.close-blocked': 'The account cannot be closed yet. Check the list below.',
+  'account.classification-exists': 'The account already has this classification.',
 };
 
 /** Portal-only problems that never come from the API. */
@@ -113,6 +131,10 @@ function placeholders(extensions: Readonly<Record<string, unknown>>): Record<str
   const party = text('existingPartyNumber') ?? text('memberPartyNumber');
   if (party) {
     result['number'] = party;
+  }
+  const numbers = extensions['partyNumbers'];
+  if (Array.isArray(numbers) && numbers.length > 0) {
+    result['numbers'] = numbers.filter((value) => typeof value === 'string').join(', ');
   }
   const group = text('groupPartyNumber');
   if (group) {

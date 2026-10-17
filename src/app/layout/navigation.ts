@@ -31,7 +31,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'bank',
     section: 'main',
     permission: { module: 'ACC', subModule: 'ACCOUNT', action: 'view' },
-    placeholder: true,
     bottomBar: true,
   },
   {

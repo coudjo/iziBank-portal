@@ -20,3 +20,4 @@ export { SwitchComponent } from './switch.component';
 export { TabsComponent, type TabLink } from './tabs.component';
 export { ToastService } from './toast.service';
 export { DialogService } from './dialog.service';
+export { statusFor } from './status-map';

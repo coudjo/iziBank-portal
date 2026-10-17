@@ -55,6 +55,11 @@ export const routes: Routes = [
         loadChildren: () => import('./features/customers/customers.routes').then((m) => m.CUSTOMER_ROUTES),
       },
       {
+        path: 'accounts',
+        canMatch: [requirePermission({ module: 'ACC', subModule: 'ACCOUNT', action: 'view' })],
+        loadChildren: () => import('./features/accounts/accounts.routes').then((m) => m.ACCOUNT_ROUTES),
+      },
+      {
         path: 'approvals',
         canMatch: [canApprove],
         loadChildren: () => import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),

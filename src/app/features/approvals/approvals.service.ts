@@ -1,12 +1,18 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { ChangeRequestView, LedgerAccountView, PartySearchRow } from '../../core/api/api-types';
+import type {
+  AccountListRow,
+  ChangeRequestView,
+  LedgerAccountView,
+  PartySearchRow,
+} from '../../core/api/api-types';
 import { AuthService } from '../../core/auth/auth.service';
 import { PermissionService } from '../../core/permissions/permission.service';
 import { InMemoryStores } from '../../core/session/in-memory-stores';
+import { AccountsClient } from '../accounts';
 import { CustomersClient } from '../customers';
 import { ApprovalsClient } from './approvals.client';
 
-export type ApprovalKind = 'customers' | 'ledger' | 'security';
+export type ApprovalKind = 'customers' | 'accounts' | 'ledger' | 'security';
 
 export interface ApprovalItem {
   kind: ApprovalKind;
@@ -32,6 +38,7 @@ export class ApprovalsService {
   private readonly auth = inject(AuthService);
   private readonly customers = inject(CustomersClient);
   private readonly client = inject(ApprovalsClient);
+  private readonly accounts = inject(AccountsClient);
 
   readonly items = signal<ApprovalItem[]>([]);
   readonly loading = signal(false);
@@ -53,6 +60,9 @@ export class ApprovalsService {
     const kinds: ApprovalKind[] = [];
     if (this.permissions.can({ module: 'PTY', subModule: 'KYC', action: 'supervise' })) {
       kinds.push('customers');
+    }
+    if (this.permissions.can({ module: 'ACC', subModule: 'ACCOUNT', action: 'supervise' })) {
+      kinds.push('accounts');
     }
     if (this.permissions.can({ module: 'LED', subModule: 'CHART', action: 'supervise' })) {
       kinds.push('ledger');
@@ -121,6 +131,15 @@ export class ApprovalsService {
         });
         return page.items.map(customerItem);
       }
+      case 'accounts': {
+        // Approval needs the account's branch, so only this branch's accounts are listed (API ADR A5-k).
+        const page = await this.accounts.search({
+          status: 'PENDING_SUPERVISION',
+          branchId: this.auth.me()?.branchId ?? null,
+          pageSize: 100,
+        });
+        return page.items.map(accountItem);
+      }
       case 'ledger': {
         const page = await this.client.ledgerAccounts({ pageSize: 100 });
         return page.items
@@ -140,6 +159,19 @@ function customerItem(row: PartySearchRow): ApprovalItem {
     what: row.displayName,
     detail: `Customer ${row.partyNumber}`,
     requestedBy: null,
+    requestedById: null,
+    requestedOn: row.createdOn,
+  };
+}
+
+function accountItem(row: AccountListRow): ApprovalItem {
+  return {
+    kind: 'accounts',
+    link: ['/accounts', row.accountId],
+    what: `${row.accountNumber} ${row.accountName}`,
+    detail: `New account · ${row.productName}`,
+    requestedBy: null,
+    // The list does not say who opened the account (api-requests P11); the account page applies four-eyes.
     requestedById: null,
     requestedOn: row.createdOn,
   };
