@@ -137,3 +137,22 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   larger screen with "Continue anyway" (UX 3). The customer record's Open account passes the customer as router
   state, never in the URL.
 - Balances read zero until the transactions phase; the card says "No transactions yet".
+
+## Products and chart of accounts (F10)
+
+- Products (ACC/PRODUCT) and Chart of accounts (LED/CHART) have their own list, new and record pages. Lists filter
+  by a search term and approval state on the server and keep filters on the page only.
+- A new product or ledger account waits for approval. After approval the code, type, prefix and currency are
+  locked in the form with a banner saying why. Other product changes, and a ledger rename, are saved as a change
+  waiting for approval (HTTP 202); freezing or deactivating a product applies at once, as the API does.
+- The product record shows a waiting change field by field (the approvals changes panel) and the approval bar for
+  ACC/PRODUCT supervise, with four-eyes against whoever requested the change, or created or last changed a new
+  product. The inbox lists pending products and products with a waiting change under Products.
+- The control ledger picker offers only approved accounts of the right type (liability for deposits, asset for
+  loans) in the product currency. When there is none it says so and links to the chart of accounts.
+- Rates show as a timeline per rate type (credit first). Adding a rate previews the open rate with the same band
+  that it will end, the day before the new one starts, and refuses an overlap before sending; the API remains the
+  judge. Close takes a last day between yesterday (or the start) and the current end. Only a rate that has not
+  started can be removed. Rate changes apply at once; whether they need a second person is open on the API
+  (open decision Q7).
+- The sidebar is sticky under the top bar, so no link slides under it while a long page scrolls.

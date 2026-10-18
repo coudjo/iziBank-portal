@@ -4,15 +4,17 @@ import type {
   ChangeRequestView,
   LedgerAccountView,
   PartySearchRow,
+  ProductView,
 } from '../../core/api/api-types';
 import { AuthService } from '../../core/auth/auth.service';
 import { PermissionService } from '../../core/permissions/permission.service';
 import { InMemoryStores } from '../../core/session/in-memory-stores';
 import { AccountsClient } from '../accounts';
 import { CustomersClient } from '../customers';
+import { ProductsClient } from '../products';
 import { ApprovalsClient } from './approvals.client';
 
-export type ApprovalKind = 'customers' | 'accounts' | 'ledger' | 'security';
+export type ApprovalKind = 'customers' | 'accounts' | 'products' | 'ledger' | 'security';
 
 export interface ApprovalItem {
   kind: ApprovalKind;
@@ -39,6 +41,7 @@ export class ApprovalsService {
   private readonly customers = inject(CustomersClient);
   private readonly client = inject(ApprovalsClient);
   private readonly accounts = inject(AccountsClient);
+  private readonly products = inject(ProductsClient);
 
   readonly items = signal<ApprovalItem[]>([]);
   readonly loading = signal(false);
@@ -63,6 +66,9 @@ export class ApprovalsService {
     }
     if (this.permissions.can({ module: 'ACC', subModule: 'ACCOUNT', action: 'supervise' })) {
       kinds.push('accounts');
+    }
+    if (this.permissions.can({ module: 'ACC', subModule: 'PRODUCT', action: 'supervise' })) {
+      kinds.push('products');
     }
     if (this.permissions.can({ module: 'LED', subModule: 'CHART', action: 'supervise' })) {
       kinds.push('ledger');
@@ -140,6 +146,12 @@ export class ApprovalsService {
         });
         return page.items.map(accountItem);
       }
+      case 'products': {
+        const page = await this.products.products({ pageSize: 100 });
+        return page.items
+          .filter((row) => row.supervisionState === 'PENDING' || row.pendingChange)
+          .map(productItem);
+      }
       case 'ledger': {
         const page = await this.client.ledgerAccounts({ pageSize: 100 });
         return page.items
@@ -174,6 +186,19 @@ function accountItem(row: AccountListRow): ApprovalItem {
     // The list does not say who opened the account (api-requests P11); the account page applies four-eyes.
     requestedById: null,
     requestedOn: row.createdOn,
+  };
+}
+
+function productItem(row: ProductView): ApprovalItem {
+  const change = row.pendingChange;
+  return {
+    kind: 'products',
+    link: ['/products', row.productId],
+    what: `${row.productCode} ${row.productName}`,
+    detail: change ? 'Product change' : 'New product',
+    requestedBy: null,
+    requestedById: change ? change.requestedByUserId : (row.modifiedByUserId ?? row.createdByUserId),
+    requestedOn: change ? change.requestedOn : row.createdOn,
   };
 }
 

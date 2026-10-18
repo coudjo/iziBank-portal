@@ -63,3 +63,6 @@ export type AccountCloseStatus = Schemas['AccountCloseStatus'];
 export type AccountClassificationView = Schemas['AccountClassificationView'];
 export type ClassificationOption = Schemas['ClassificationOption'];
 export type PartyAccountRow = Schemas['PartyAccountRow'];
+export type ProductChange = Schemas['ProductChange'];
+export type LedgerAccountRequest = Schemas['LedgerAccountRequest'];
+export type CurrencyView = Schemas['CurrencyView'];

@@ -1,9 +1,17 @@
 import { http, HttpResponse } from 'msw';
-import type { ChangeRequestView, LedgerAccountView } from '../app/core/api/api-types';
-import { problem } from './parties';
+import type { ChangeRequestView, LedgerAccountRequest, LedgerAccountView } from '../app/core/api/api-types';
+import { problem, validation } from './parties';
 
 /** Mock chart-of-accounts items and security change requests awaiting approval (F8). Never real data. */
 const KEY = 'ib-mock-approvals';
+
+export const LEDGER_TYPES = [
+  { id: 1, code: 'ASSET', name: 'Asset', isActive: true, isCoded: true },
+  { id: 2, code: 'LIABILITY', name: 'Liability', isActive: true, isCoded: true },
+  { id: 3, code: 'EQUITY', name: 'Equity', isActive: true, isCoded: true },
+  { id: 4, code: 'INCOME', name: 'Income', isActive: true, isCoded: true },
+  { id: 5, code: 'EXPENSE', name: 'Expense', isActive: true, isCoded: true },
+];
 
 interface ApprovalState {
   ledger: LedgerAccountView[];
@@ -32,7 +40,6 @@ function seed(): ApprovalState {
     branchCode: '001',
     ledgerAccountCode: code,
     accountName: name,
-    ledgerAccountTypeId: 1,
     ledgerAccountTypeCode: 'ASSET',
     currencyId: 1,
     currencyCode: 'GHS',
@@ -44,6 +51,8 @@ function seed(): ApprovalState {
     supervisedOn: '2026-10-01T09:00:00Z',
     pendingChange: null,
     ...extra,
+    ledgerAccountTypeId:
+      LEDGER_TYPES.find((type) => type.code === (extra.ledgerAccountTypeCode ?? 'ASSET'))?.id ?? 1,
   });
   return {
     ledger: [
@@ -62,6 +71,8 @@ function seed(): ApprovalState {
         },
       }),
       account(503, '1001001', 'Teller cash - Head Office', {}),
+      account(504, '2010001', 'Customer savings control', { ledgerAccountTypeCode: 'LIABILITY' }),
+      account(505, '1300001', 'Loans to customers', {}),
     ],
     changes: [
       {
@@ -142,8 +153,113 @@ export function approvalHandlers(
       }
       const url = new URL(request.url);
       const wanted = url.searchParams.get('supervisionState');
-      const items = state.ledger.filter((row) => !wanted || row.supervisionState === wanted);
+      const type = Number(url.searchParams.get('ledgerAccountTypeId') ?? 0);
+      const search = (url.searchParams.get('search') ?? '').toLowerCase();
+      const items = state.ledger.filter(
+        (row) =>
+          (!wanted || row.supervisionState === wanted) &&
+          (!type || row.ledgerAccountTypeId === type) &&
+          (!search ||
+            row.ledgerAccountCode.toLowerCase().includes(search) ||
+            row.accountName.toLowerCase().includes(search)),
+      );
       return HttpResponse.json({ items, page: 1, pageSize: 100, totalCount: items.length });
+    }),
+
+    http.get(
+      `${base}/lookups/ledger-account-types`,
+      ({ request }) => signedIn(request) ?? HttpResponse.json(LEDGER_TYPES),
+    ),
+
+    http.post(`${base}/ledger-accounts`, async ({ request }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const body = (await request.json()) as LedgerAccountRequest;
+      const code = (body.ledgerAccountCode ?? '').trim().toUpperCase();
+      const errors: Record<string, string[]> = {};
+      if (!/^[A-Z0-9.-]{1,20}$/.test(code)) {
+        errors['ledgerAccountCode'] = ['Use 1 to 20 capital letters, digits, dots or dashes.'];
+      }
+      if (!body.accountName?.trim()) {
+        errors['accountName'] = ['Enter a name of up to 100 characters.'];
+      }
+      const type = LEDGER_TYPES.find((row) => row.id === body.ledgerAccountTypeId);
+      if (!type) {
+        errors['ledgerAccountTypeId'] = ['Choose an account type from the list.'];
+      }
+      if (Object.keys(errors).length > 0) {
+        return validation(errors);
+      }
+      if (state.ledger.some((row) => row.ledgerAccountCode === code)) {
+        return problem(409, 'reference.code-taken');
+      }
+      const id = Math.max(...state.ledger.map((row) => row.ledgerAccountId)) + 1;
+      state.ledger.push({
+        ledgerAccountId: id,
+        branchId: 1,
+        branchCode: '001',
+        ledgerAccountCode: code,
+        accountName: body.accountName!.trim(),
+        ledgerAccountTypeId: type!.id,
+        ledgerAccountTypeCode: type!.code,
+        currencyId: body.currencyId ?? 1,
+        currencyCode: 'GHS',
+        balance: 0,
+        supervisionState: 'PENDING',
+        createdByUserId: who(request),
+        modifiedByUserId: null,
+        supervisedByUserId: null,
+        supervisedOn: null,
+        pendingChange: null,
+      });
+      save();
+      return HttpResponse.json({ id }, { status: 201 });
+    }),
+
+    http.put(`${base}/ledger-accounts/:id`, async ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const row = state.ledger.find((item) => item.ledgerAccountId === Number(params['id']));
+      if (!row) {
+        return problem(404, 'not-found');
+      }
+      const body = (await request.json()) as LedgerAccountRequest;
+      const name = body.accountName?.trim() ?? '';
+      if (!name) {
+        return validation({ accountName: ['Enter a name of up to 100 characters.'] });
+      }
+      if (row.supervisionState === 'PENDING') {
+        const type = LEDGER_TYPES.find((item) => item.id === body.ledgerAccountTypeId) ?? LEDGER_TYPES[0];
+        Object.assign(row, {
+          accountName: name,
+          ledgerAccountTypeId: type.id,
+          ledgerAccountTypeCode: type.code,
+          modifiedByUserId: who(request),
+        });
+        save();
+        return new HttpResponse(null, { status: 204 });
+      }
+      if (body.ledgerAccountTypeId !== row.ledgerAccountTypeId || body.currencyId !== row.currencyId) {
+        return problem(409, 'ledger.field-locked');
+      }
+      if (name === row.accountName) {
+        return new HttpResponse(null, { status: 204 });
+      }
+      if (row.pendingChange) {
+        return problem(409, 'change.pending-exists');
+      }
+      row.pendingChange = {
+        changeRequestId: 900 + row.ledgerAccountId,
+        proposedName: name,
+        requestedByUserId: who(request) ?? 0,
+        requestedOn: new Date().toISOString(),
+      };
+      save();
+      return HttpResponse.json({ changeRequestId: row.pendingChange.changeRequestId }, { status: 202 });
     }),
 
     http.get(`${base}/ledger-accounts/:id`, ({ request, params }) => {
@@ -258,4 +374,9 @@ export function approvalHandlers(
       return new HttpResponse(null, { status: 204 });
     }),
   ];
+}
+
+/** A ledger account by id, for the product mocks' control account. */
+export function ledgerById(id: number | null | undefined): LedgerAccountView | undefined {
+  return state.ledger.find((row) => row.ledgerAccountId === id);
 }

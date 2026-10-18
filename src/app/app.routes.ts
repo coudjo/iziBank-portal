@@ -60,6 +60,16 @@ export const routes: Routes = [
         loadChildren: () => import('./features/accounts/accounts.routes').then((m) => m.ACCOUNT_ROUTES),
       },
       {
+        path: 'products',
+        canMatch: [requirePermission({ module: 'ACC', subModule: 'PRODUCT', action: 'view' })],
+        loadChildren: () => import('./features/products/products.routes').then((m) => m.PRODUCT_ROUTES),
+      },
+      {
+        path: 'ledger-accounts',
+        canMatch: [requirePermission({ module: 'LED', subModule: 'CHART', action: 'view' })],
+        loadChildren: () => import('./features/ledger-accounts/ledger.routes').then((m) => m.LEDGER_ROUTES),
+      },
+      {
         path: 'approvals',
         canMatch: [canApprove],
         loadChildren: () => import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),

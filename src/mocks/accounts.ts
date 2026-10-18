@@ -8,8 +8,15 @@ import type {
   FreezeActionView,
   OpenAccountRequest,
   PartyAccountRow,
+  ProductChange,
+  ProductRateRequest,
+  ProductRateView,
+  ProductRequest,
   ProductView,
 } from '../app/core/api/api-types';
+import { todayIso } from '../app/core/formats/dates';
+import { addDays, earliestClose, overlappingRate, rateClosedBy } from '../app/features/products/rate-rules';
+import { ledgerById } from './approvals';
 import { find, problem, validation } from './parties';
 
 /**
@@ -41,6 +48,32 @@ export const CLOSE_REASONS = [
 
 const DIRECT_TYPES = ['SAVINGS', 'CURRENT'];
 
+export const PRODUCT_TYPES = [
+  { id: 1, code: 'SAVINGS', name: 'Savings', isActive: true, isCoded: true },
+  { id: 2, code: 'CURRENT', name: 'Current', isActive: true, isCoded: true },
+  { id: 3, code: 'FIXED_DEPOSIT', name: 'Fixed deposit', isActive: true, isCoded: true },
+  { id: 4, code: 'LOAN', name: 'Loan', isActive: true, isCoded: true },
+];
+
+export const RATE_TYPES = [
+  { id: 1, code: 'CREDIT', name: 'Credit', isActive: true, isCoded: true },
+  { id: 2, code: 'DEBIT', name: 'Debit', isActive: true, isCoded: true },
+];
+
+const CURRENCIES = [
+  { currencyId: 1, currencyCode: 'GHS', currencyName: 'Ghana cedi', exchangeRate: 1, isLocalCurrency: true },
+  {
+    currencyId: 2,
+    currencyCode: 'USD',
+    currencyName: 'US dollar',
+    exchangeRate: 15.5,
+    isLocalCurrency: false,
+  },
+];
+
+/** A stored rate; status and isStarted are worked out from today's date when read. */
+type MockRate = Omit<ProductRateView, 'status' | 'isStarted'> & { productId: number };
+
 interface MockHold {
   id: number;
   action: string;
@@ -58,6 +91,9 @@ interface MockAccount {
 
 interface AccountState {
   products: ProductView[];
+  rates: MockRate[];
+  nextRate: number;
+  nextProduct: number;
   accounts: MockAccount[];
   catalog: ClassificationOption[];
   next: number;
@@ -83,9 +119,9 @@ function product(
     accountPrefix: prefix,
     currencyId: 1,
     currencyCode: 'GHS',
-    ledgerControlAccountId: 501,
-    ledgerControlAccountCode: '2010-01',
-    ledgerControlAccountName: 'Customer savings',
+    ledgerControlAccountId: 504,
+    ledgerControlAccountCode: '2010001',
+    ledgerControlAccountName: 'Customer savings control',
     creditInterestRate: 3,
     debitInterestRate: null,
     minimumBalance: 50,
@@ -182,12 +218,51 @@ function seed(): AccountState {
   const loan = product(3, 'LN01', 'Salary loan', 'LOAN', '30', {
     minimumBalance: null,
     creditInterestRate: null,
+    debitInterestRate: 24,
+    ledgerControlAccountId: 505,
+    ledgerControlAccountCode: '1300001',
+    ledgerControlAccountName: 'Loans to customers',
   });
   const frozen = product(4, 'SAV02', 'Junior savings', 'SAVINGS', '11', { isFreezed: true });
+  const deposit = product(5, 'FD01', 'Fixed deposit 12 months', 'FIXED_DEPOSIT', '40', {
+    supervisionState: 'PENDING',
+    createdByUserId: 99,
+    createdOn: '2026-10-13T11:00:00Z',
+    supervisedByUserId: null,
+    supervisedOn: null,
+    creditInterestRate: 18,
+    minimumBalance: 1000,
+  });
+  const today = todayIso();
+  const rate = (
+    id: number,
+    productId: number,
+    type: string,
+    interestRate: number,
+    from: string,
+    to: string | null,
+  ) => ({
+    productInterestRateId: id,
+    productId,
+    rateTypeId: type === 'CREDIT' ? 1 : 2,
+    rateTypeCode: type,
+    minimumAmount: null,
+    maximumAmount: null,
+    interestRate,
+    effectiveFrom: from,
+    effectiveTo: to,
+  });
   return {
     next: 205,
     sequence: 10,
-    products: [savings, current, loan, frozen],
+    nextProduct: 6,
+    nextRate: 10,
+    products: [savings, current, loan, frozen, deposit],
+    rates: [
+      rate(1, 1, 'CREDIT', 2.5, addDays(today, -120), addDays(today, -31)),
+      rate(2, 1, 'CREDIT', 3, addDays(today, -30), null),
+      rate(3, 3, 'DEBIT', 24, addDays(today, -60), null),
+    ],
     catalog: [
       {
         accountClassificationId: 1,
@@ -245,6 +320,9 @@ function load(): AccountState {
 }
 
 let state = load();
+state.rates ??= seed().rates;
+state.nextRate ??= 10;
+state.nextProduct ??= 6;
 
 function save(): void {
   try {
@@ -317,6 +395,91 @@ export function accountsHeldBy(partyId: number): PartyAccountRow[] {
         status: item.view.status,
       })),
   );
+}
+
+function findProduct(id: unknown): ProductView | undefined {
+  return state.products.find((row) => row.productId === Number(id));
+}
+
+function findRate(productId: unknown, rateId: unknown): MockRate | undefined {
+  return state.rates.find(
+    (row) => row.productId === Number(productId) && row.productInterestRateId === Number(rateId),
+  );
+}
+
+function rateView(rate: MockRate): ProductRateView {
+  const today = todayIso();
+  return {
+    productInterestRateId: rate.productInterestRateId,
+    rateTypeId: rate.rateTypeId,
+    rateTypeCode: rate.rateTypeCode,
+    minimumAmount: rate.minimumAmount,
+    maximumAmount: rate.maximumAmount,
+    interestRate: rate.interestRate,
+    effectiveFrom: rate.effectiveFrom,
+    effectiveTo: rate.effectiveTo,
+    isStarted: rate.effectiveFrom <= today,
+    status:
+      rate.effectiveFrom > today
+        ? 'SCHEDULED'
+        : rate.effectiveTo !== null && rate.effectiveTo < today
+          ? 'ENDED'
+          : 'CURRENT',
+  };
+}
+
+function ratesOf(productId: number): ProductRateView[] {
+  return state.rates
+    .filter((row) => row.productId === productId)
+    .sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom))
+    .map(rateView);
+}
+
+function control(ledgerAccountId: number | null): Partial<ProductView> {
+  const ledger = ledgerById(ledgerAccountId);
+  return {
+    ledgerControlAccountId: ledger?.ledgerAccountId ?? null,
+    ledgerControlAccountCode: ledger?.ledgerAccountCode ?? null,
+    ledgerControlAccountName: ledger?.accountName ?? null,
+  };
+}
+
+function changeOf(item: ProductView): ProductChange {
+  return {
+    productName: item.productName,
+    ledgerControlAccountId: item.ledgerControlAccountId,
+    creditInterestRate: item.creditInterestRate,
+    debitInterestRate: item.debitInterestRate,
+    minimumBalance: item.minimumBalance,
+    accountsPerCustomer: item.accountsPerCustomer,
+    isChequeBookAllowed: item.isChequeBookAllowed,
+    isFreezed: item.isFreezed,
+    isActive: item.isActive,
+  };
+}
+
+function apply(item: ProductView, change: ProductChange): Partial<ProductView> {
+  return { ...change, ...control(change.ledgerControlAccountId ?? item.ledgerControlAccountId) };
+}
+
+function productErrors(body: ProductRequest, creating: boolean): Record<string, string[]> | null {
+  const errors: Record<string, string[]> = {};
+  if (creating && !/^[A-Za-z0-9-]{1,10}$/.test(body.productCode?.trim() ?? '')) {
+    errors['productCode'] = ['Use 1 to 10 capital letters, digits or dashes.'];
+  }
+  if (!body.productName?.trim()) {
+    errors['productName'] = ['Enter a name of up to 100 characters.'];
+  }
+  if (!PRODUCT_TYPES.some((row) => row.id === body.productTypeId)) {
+    errors['productTypeId'] = ['Choose a product type from the list.'];
+  }
+  if (!/^\d{1,6}$/.test(body.accountPrefix?.trim() ?? '')) {
+    errors['accountPrefix'] = ['Use 1 to 6 digits.'];
+  }
+  if (!CURRENCIES.some((row) => row.currencyId === body.currencyId)) {
+    errors['currencyId'] = ['Choose a currency from the list.'];
+  }
+  return Object.keys(errors).length > 0 ? errors : null;
 }
 
 function page<T>(rows: T[], pageNumber: number, pageSize: number) {
@@ -501,6 +664,10 @@ export function accountHandlers(
     lookup('account-holder-roles', HOLDER_ROLES),
     lookup('close-reasons', CLOSE_REASONS),
 
+    lookup('product-types', PRODUCT_TYPES),
+    lookup('rate-types', RATE_TYPES),
+    http.get(`${base}/currencies`, ({ request }) => signedIn(request) ?? HttpResponse.json(CURRENCIES)),
+
     http.get(`${base}/products`, ({ request }) => {
       const denied = signedIn(request);
       if (denied) {
@@ -508,17 +675,349 @@ export function accountHandlers(
       }
       const params = new URL(request.url).searchParams;
       const openable = params.get('openable') === 'true';
+      const term = (params.get('search') ?? '').trim().toLowerCase();
+      const wanted = params.get('supervisionState');
+      const type = Number(params.get('productTypeId') ?? 0);
       const rows = state.products.filter(
         (row) =>
-          !openable ||
-          (row.isActive &&
-            !row.isFreezed &&
-            row.supervisionState !== 'PENDING' &&
-            DIRECT_TYPES.includes(row.productTypeCode)),
+          (!openable ||
+            (row.isActive &&
+              !row.isFreezed &&
+              row.supervisionState !== 'PENDING' &&
+              DIRECT_TYPES.includes(row.productTypeCode))) &&
+          (!term ||
+            row.productCode.toLowerCase().includes(term) ||
+            row.productName.toLowerCase().includes(term)) &&
+          (!wanted || row.supervisionState === wanted) &&
+          (!type || row.productTypeId === type),
       );
       return HttpResponse.json(
         page(rows, Number(params.get('page') ?? 1), Number(params.get('pageSize') ?? 25)),
       );
+    }),
+
+    http.get(`${base}/products/:id`, ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      return item ? HttpResponse.json(item) : problem(404, 'not-found');
+    }),
+
+    http.post(`${base}/products`, async ({ request }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const body = (await request.json()) as ProductRequest;
+      const errors = productErrors(body, true);
+      if (errors) {
+        return validation(errors);
+      }
+      const code = body.productCode!.trim().toUpperCase();
+      if (state.products.some((row) => row.productCode === code)) {
+        return problem(409, 'product.code-taken');
+      }
+      const type = PRODUCT_TYPES.find((row) => row.id === body.productTypeId)!;
+      const currency = CURRENCIES.find((row) => row.currencyId === body.currencyId)!;
+      const id = state.nextProduct++;
+      state.products.push(
+        product(id, code, body.productName!.trim(), type.code, body.accountPrefix!.trim(), {
+          currencyId: currency.currencyId,
+          currencyCode: currency.currencyCode,
+          ...control(body.ledgerControlAccountId ?? null),
+          creditInterestRate: body.creditInterestRate ?? null,
+          debitInterestRate: body.debitInterestRate ?? null,
+          minimumBalance: body.minimumBalance ?? null,
+          accountsPerCustomer: body.accountsPerCustomer ?? null,
+          isChequeBookAllowed: body.isChequeBookAllowed ?? false,
+          isFreezed: body.isFreezed ?? false,
+          isActive: body.isActive ?? true,
+          supervisionState: 'PENDING',
+          createdByUserId: who(request),
+          createdOn: new Date().toISOString(),
+          supervisedByUserId: null,
+          supervisedOn: null,
+        }),
+      );
+      save();
+      return HttpResponse.json({ id }, { status: 201 });
+    }),
+
+    http.put(`${base}/products/:id`, async ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      if (!item) {
+        return problem(404, 'not-found');
+      }
+      const body = (await request.json()) as ProductRequest;
+      if (body.productCode && body.productCode.trim().toUpperCase() !== item.productCode) {
+        return problem(400, 'reference.code-immutable');
+      }
+      const errors = productErrors(body, false);
+      if (errors) {
+        return validation(errors);
+      }
+      const proposed: ProductChange = {
+        productName: body.productName!.trim(),
+        ledgerControlAccountId: body.ledgerControlAccountId ?? null,
+        creditInterestRate: body.creditInterestRate ?? null,
+        debitInterestRate: body.debitInterestRate ?? null,
+        minimumBalance: body.minimumBalance ?? null,
+        accountsPerCustomer: body.accountsPerCustomer ?? null,
+        isChequeBookAllowed: body.isChequeBookAllowed ?? false,
+        isFreezed: body.isFreezed ?? false,
+        isActive: body.isActive ?? true,
+      };
+      if (item.supervisionState === 'PENDING') {
+        const type = PRODUCT_TYPES.find((row) => row.id === body.productTypeId) ?? PRODUCT_TYPES[0];
+        const currency = CURRENCIES.find((row) => row.currencyId === body.currencyId) ?? CURRENCIES[0];
+        Object.assign(item, apply(item, proposed), {
+          productTypeId: type.id,
+          productTypeCode: type.code,
+          accountPrefix: body.accountPrefix!.trim(),
+          currencyId: currency.currencyId,
+          currencyCode: currency.currencyCode,
+          modifiedByUserId: who(request),
+        });
+        save();
+        return new HttpResponse(null, { status: 204 });
+      }
+      if (
+        body.productTypeId !== item.productTypeId ||
+        body.accountPrefix?.trim() !== item.accountPrefix ||
+        body.currencyId !== item.currencyId
+      ) {
+        return problem(409, 'product.field-locked');
+      }
+      const current = changeOf(item);
+      const differs = (Object.keys(proposed) as (keyof ProductChange)[]).filter(
+        (key) => proposed[key] !== current[key],
+      );
+      if (differs.length === 0) {
+        return new HttpResponse(null, { status: 204 });
+      }
+      if (differs.every((key) => key === 'isFreezed' || key === 'isActive')) {
+        Object.assign(item, {
+          isFreezed: proposed.isFreezed,
+          isActive: proposed.isActive,
+          modifiedByUserId: who(request),
+        });
+        save();
+        return new HttpResponse(null, { status: 204 });
+      }
+      if (item.pendingChange) {
+        return problem(409, 'change.pending-exists');
+      }
+      const changeRequestId = 800 + item.productId;
+      item.pendingChange = {
+        changeRequestId,
+        proposed,
+        requestedByUserId: who(request) ?? 0,
+        requestedOn: new Date().toISOString(),
+      };
+      save();
+      return HttpResponse.json({ changeRequestId }, { status: 202 });
+    }),
+
+    http.post(`${base}/products/:id/supervise`, ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      if (!item) {
+        return problem(404, 'not-found');
+      }
+      const me = who(request);
+      if (item.pendingChange) {
+        if (item.pendingChange.requestedByUserId === me) {
+          return problem(409, 'supervision.self-approval');
+        }
+        Object.assign(item, apply(item, item.pendingChange.proposed), {
+          pendingChange: null,
+          supervisedByUserId: me,
+          supervisedOn: new Date().toISOString(),
+        });
+      } else if (item.supervisionState === 'PENDING') {
+        if (item.createdByUserId === me || item.modifiedByUserId === me) {
+          return problem(409, 'supervision.self-approval');
+        }
+        Object.assign(item, {
+          supervisionState: 'APPROVED',
+          supervisedByUserId: me,
+          supervisedOn: new Date().toISOString(),
+        });
+      } else {
+        return problem(409, 'supervision.not-pending');
+      }
+      save();
+      return new HttpResponse(null, { status: 204 });
+    }),
+
+    http.post(`${base}/products/:id/reject`, async ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      if (!item) {
+        return problem(404, 'not-found');
+      }
+      const body = (await request.json()) as { reason?: string };
+      if (!body.reason?.trim()) {
+        return validation({ reason: ['Enter the reason.'] });
+      }
+      if (item.pendingChange) {
+        item.pendingChange = null;
+      } else if (item.supervisionState === 'PENDING') {
+        state.products = state.products.filter((row) => row !== item);
+        state.rates = state.rates.filter((row) => row.productId !== item.productId);
+      } else {
+        return problem(409, 'supervision.not-pending');
+      }
+      save();
+      return new HttpResponse(null, { status: 204 });
+    }),
+
+    http.get(`${base}/products/:id/interest-rates`, ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      return item ? HttpResponse.json(ratesOf(item.productId)) : problem(404, 'not-found');
+    }),
+
+    http.post(`${base}/products/:id/interest-rates`, async ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const item = findProduct(params['id']);
+      if (!item) {
+        return problem(404, 'not-found');
+      }
+      const body = (await request.json()) as ProductRateRequest;
+      const today = todayIso();
+      const errors: Record<string, string[]> = {};
+      const type = RATE_TYPES.find((row) => row.id === body.rateTypeId);
+      if (!type) {
+        errors['rateTypeId'] = ['Choose a rate type from the list.'];
+      }
+      if (
+        body.interestRate === null ||
+        body.interestRate === undefined ||
+        body.interestRate < 0 ||
+        body.interestRate > 100
+      ) {
+        errors['interestRate'] = ['Enter a rate from 0 to 100.'];
+      }
+      if (!body.effectiveFrom) {
+        errors['effectiveFrom'] = ['Enter the start date.'];
+      } else if (body.effectiveFrom < today) {
+        errors['effectiveFrom'] = ['The start date cannot be in the past.'];
+      }
+      if (body.effectiveTo && body.effectiveFrom && body.effectiveTo < body.effectiveFrom) {
+        errors['effectiveTo'] = ['The end date must be on or after the start date.'];
+      }
+      if (
+        body.minimumAmount !== null &&
+        body.minimumAmount !== undefined &&
+        body.maximumAmount !== null &&
+        body.maximumAmount !== undefined &&
+        body.maximumAmount < body.minimumAmount
+      ) {
+        errors['maximumAmount'] = ['The highest amount must be at least the lowest amount.'];
+      }
+      if (Object.keys(errors).length > 0) {
+        return validation(errors);
+      }
+      const rows = ratesOf(item.productId);
+      const draft = {
+        rateTypeCode: type!.code,
+        minimumAmount: body.minimumAmount ?? null,
+        maximumAmount: body.maximumAmount ?? null,
+        from: body.effectiveFrom!,
+        to: body.effectiveTo ?? null,
+      };
+      if (overlappingRate(rows, draft)) {
+        return problem(409, 'product.rate-overlap');
+      }
+      const closed = rateClosedBy(rows, draft);
+      if (closed) {
+        const stored = state.rates.find(
+          (row) => row.productInterestRateId === closed.rate.productInterestRateId,
+        );
+        if (stored) {
+          stored.effectiveTo = closed.closesOn;
+        }
+      }
+      const id = state.nextRate++;
+      state.rates.push({
+        productInterestRateId: id,
+        productId: item.productId,
+        rateTypeId: type!.id,
+        rateTypeCode: type!.code,
+        minimumAmount: draft.minimumAmount,
+        maximumAmount: draft.maximumAmount,
+        interestRate: body.interestRate!,
+        effectiveFrom: draft.from,
+        effectiveTo: draft.to,
+      });
+      save();
+      return HttpResponse.json(
+        {
+          productInterestRateId: id,
+          closedRateId: closed?.rate.productInterestRateId ?? null,
+          closedOn: closed?.closesOn ?? null,
+        },
+        { status: 201 },
+      );
+    }),
+
+    http.post(`${base}/products/:id/interest-rates/:rateId/close`, async ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const rate = findRate(params['id'], params['rateId']);
+      if (!rate) {
+        return problem(404, 'not-found');
+      }
+      const body = (await request.json()) as { effectiveTo?: string | null };
+      const view = rateView(rate);
+      const earliest = earliestClose(view, todayIso());
+      if (!body.effectiveTo || body.effectiveTo < earliest) {
+        return validation({ effectiveTo: [`Choose ${earliest} or later.`] });
+      }
+      if (rate.effectiveTo !== null && rate.effectiveTo < todayIso()) {
+        return problem(409, 'product.rate-started');
+      }
+      rate.effectiveTo = body.effectiveTo;
+      save();
+      return new HttpResponse(null, { status: 204 });
+    }),
+
+    http.delete(`${base}/products/:id/interest-rates/:rateId`, ({ request, params }) => {
+      const denied = signedIn(request);
+      if (denied) {
+        return denied;
+      }
+      const rate = findRate(params['id'], params['rateId']);
+      if (!rate) {
+        return problem(404, 'not-found');
+      }
+      if (rateView(rate).isStarted) {
+        return problem(409, 'product.rate-started');
+      }
+      state.rates = state.rates.filter((row) => row !== rate);
+      save();
+      return new HttpResponse(null, { status: 204 });
     }),
 
     http.get(`${base}/accounts`, ({ request }) => {

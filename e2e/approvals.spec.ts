@@ -6,10 +6,10 @@ test.describe('Approvals (F8, F3-05)', () => {
     page,
   }, info) => {
     await signInAdmin(page);
-    // Customers awaiting approval (seeded: 5 of 7), 1 new account, 2 chart of accounts items, 1 security change
-    // (the other is mine).
+    // Customers awaiting approval (seeded: 5 of 7), 1 new account, 1 new product, 2 chart of accounts items,
+    // 1 security change (the other is mine).
     const badge = page.getByTestId('approvals-badge').first();
-    await expect(badge).toContainText('9');
+    await expect(badge).toContainText('10');
 
     if (isPhone(info)) {
       await page
@@ -18,7 +18,7 @@ test.describe('Approvals (F8, F3-05)', () => {
         .click();
     } else {
       await page
-        .getByRole('link', { name: /^Approvals 9 waiting$/ })
+        .getByRole('link', { name: /^Approvals 10 waiting$/ })
         .first()
         .click();
     }
@@ -26,6 +26,7 @@ test.describe('Approvals (F8, F3-05)', () => {
     const tabs = page.getByRole('navigation', { name: 'Approvals by type' });
     await expect(tabs.getByRole('link', { name: 'Customers (5)' })).toBeVisible();
     await expect(tabs.getByRole('link', { name: 'Accounts (1)' })).toBeVisible();
+    await expect(tabs.getByRole('link', { name: 'Products (1)' })).toBeVisible();
     await expect(tabs.getByRole('link', { name: 'Chart of accounts (2)' })).toBeVisible();
     await expect(tabs.getByRole('link', { name: 'Security (1)' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Yaw Ofori' })).toHaveAttribute(

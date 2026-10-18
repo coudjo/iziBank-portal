@@ -79,6 +79,12 @@
 .sidebar {
   width: 232px;
   flex-shrink: 0;
+  // Stays in view under the top bar while the page scrolls, so no link slides beneath it.
+  position: sticky;
+  top: 56px;
+  align-self: flex-start;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
   padding: var(--ib-space-4) var(--ib-space-2);
   background: var(--ib-surface);
   border-right: 1px solid var(--ib-line);

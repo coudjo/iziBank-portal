@@ -42,6 +42,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
     bottomBar: true,
   },
   {
+    label: 'Products',
+    path: '/products',
+    icon: 'appstore',
+    section: 'main',
+    permission: { module: 'ACC', subModule: 'PRODUCT', action: 'view' },
+  },
+  {
+    label: 'Chart of accounts',
+    path: '/ledger-accounts',
+    icon: 'audit',
+    section: 'main',
+    permission: { module: 'LED', subModule: 'CHART', action: 'view' },
+  },
+  {
     label: 'Staff',
     path: '/admin/staff',
     icon: 'user',

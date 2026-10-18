@@ -22,7 +22,7 @@ test.describe('Sign in', () => {
 
     const nav = page.getByRole('navigation', { name: 'Main' });
     await expect(nav.getByRole('link', { name: 'Customers' })).toBeVisible();
-    await expect(nav.getByRole('link', { name: 'Accounts' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Accounts', exact: true })).toBeVisible();
     if (!isPhone(info)) {
       await expect(nav.getByRole('link', { name: 'Staff' })).toHaveCount(0);
     }

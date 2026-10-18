@@ -17,6 +17,7 @@ import { ApprovalItem, ApprovalKind, ApprovalsService } from './approvals.servic
 export const KIND_LABELS: Readonly<Record<ApprovalKind, string>> = {
   customers: 'Customers',
   accounts: 'Accounts',
+  products: 'Products',
   ledger: 'Chart of accounts',
   security: 'Security',
 };
@@ -75,6 +76,9 @@ export const KIND_LABELS: Readonly<Record<ApprovalKind, string>> = {
     }
     @if (kind() === 'customers') {
       <p class="note">Customers are approved by verifying their KYC. Opening one takes you to its KYC tab.</p>
+    }
+    @if (kind() === 'products') {
+      <p class="note">Opening a product shows its details and any change, where you approve or reject it.</p>
     }
     @if (kind() === 'accounts') {
       <p class="note">Opening an account takes you to it, where you approve or reject it.</p>
