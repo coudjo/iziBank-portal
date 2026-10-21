@@ -65,6 +65,25 @@ test.describe('Sign in', () => {
     }
   });
 
+  test('the account menu works by keyboard: arrows move, Esc closes and returns focus', async ({ page }) => {
+    await signIn(page, USERS.teller);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    const trigger = page.getByRole('button', { name: /Account menu/ });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    const menu = page.getByRole('menu', { name: 'Account menu' });
+    await expect(menu).toContainText('Ama Mensah (TELLER1)');
+    await expect(menu.getByRole('menuitem', { name: 'Change password' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(menu.getByRole('menuitem', { name: 'Change password' })).toBeFocused();
+    await expectNoAxeViolations(page);
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+
   test('signing out in one tab signs out the other', async ({ context }) => {
     const first = await context.newPage();
     const second = await context.newPage();

@@ -9,10 +9,12 @@ Provider-agnostic. Node 24 (Angular 22 needs 22.22.3 or newer, or 24.15+).
 5. `npm test -- --watch=false`
 6. `npm run build`
 7. `npx playwright install --with-deps chromium` then `npm run e2e` (desktop 1366x768, tablet 820x1180, phone 390x844, with axe)
-8. `npm run check:errors`, `npm run check:contrast`, `npm run check:colours`
+8. `npm run check:errors`, `npm run check:contrast`, `npm run check:colours`, `npm run check:bundle` (after the build)
 9. Generated API types are in date: `npm run gen:api` then `git diff --exit-code src/app/core/api`
 
-Local: `npm run check` covers steps 2 to 6.
+Local: `npm run check` covers steps 2 to 6 and the bundle check.
+
+The Docker image (`docker/Dockerfile`) builds for production and runs `check:bundle` too; `docker/nginx.conf` serves it with the headers in `docker/security-headers.inc`.
 
 ## Updating the API contract
 

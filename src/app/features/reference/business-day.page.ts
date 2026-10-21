@@ -174,7 +174,7 @@ interface BranchDay {
       @if (recent().length === 0) {
         <p class="muted">None yet.</p>
       } @else {
-        <div class="scroll" tabindex="0" role="region" aria-labelledby="recent-title">
+        <div class="scroll" tabindex="0" role="region" aria-label="Recent days table">
           <table>
             <thead>
               <tr>
@@ -205,7 +205,7 @@ interface BranchDay {
         <p class="muted">
           To open or close another branch's day, switch to that branch from your account menu.
         </p>
-        <div class="scroll" tabindex="0" role="region" aria-labelledby="others-title">
+        <div class="scroll" tabindex="0" role="region" aria-label="Other branches table">
           <table>
             <thead>
               <tr>

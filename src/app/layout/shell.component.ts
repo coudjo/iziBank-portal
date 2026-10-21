@@ -1,3 +1,4 @@
+import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,7 +10,6 @@ import {
   untracked,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { AuthService } from '../core/auth/auth.service';
@@ -31,7 +31,9 @@ import { ApprovalsService } from '../features/approvals';
     RouterLink,
     RouterLinkActive,
     NzIconModule,
-    NzDropdownModule,
+    CdkMenu,
+    CdkMenuItem,
+    CdkMenuTrigger,
     NzTooltipModule,
     BannerComponent,
     StatusChipComponent,

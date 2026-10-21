@@ -185,11 +185,13 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
     <ib-page-header title="Holidays" />
     <div class="year">
       <ib-button (click)="year.set(year() - 1)"
-        >‹ <span class="ib-visually-hidden">Show</span> {{ year() - 1 }}</ib-button
+        ><span aria-hidden="true">‹&nbsp;</span><span class="ib-visually-hidden">Show </span
+        >{{ year() - 1 }}</ib-button
       >
       <strong aria-live="polite">{{ year() }}</strong>
       <ib-button (click)="year.set(year() + 1)"
-        ><span class="ib-visually-hidden">Show</span> {{ year() + 1 }} ›</ib-button
+        ><span class="ib-visually-hidden">Show </span>{{ year() + 1
+        }}<span aria-hidden="true">&nbsp;›</span></ib-button
       >
     </div>
     @if (failure(); as text) {

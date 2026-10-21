@@ -12,12 +12,13 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit",
     "e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run format:check && npm run check:errors && npm run check:contrast && npm run check:colours && npm test -- --watch=false && npm run build",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm run check:errors && npm run check:contrast && npm run check:colours && npm test -- --watch=false && npm run build && npm run check:bundle",
     "sync:api": "node scripts/sync-api.mjs",
     "gen:api": "openapi-typescript api/openapi.json -o src/app/core/api/schema.d.ts",
     "check:errors": "node scripts/check-error-catalog.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "check:colours": "node scripts/check-colours.mjs"
+    "check:colours": "node scripts/check-colours.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.4",

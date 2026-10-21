@@ -78,3 +78,9 @@ Starting list: frontend plan section 11 and UX design section 9.
 | #   | Need                               | Used by                                               | Suggested change                       |
 | --- | ---------------------------------- | ----------------------------------------------------- | -------------------------------------- |
 | P20 | Filter the activity log by outcome | Audit activity filters (UX 6.12 step 1 lists outcome) | Add `outcome` to `GET /audit/activity` |
+
+## Notes from F12 (2026-10-21)
+
+| #   | Need                                                     | Used by                                                                                                               | Suggested change                                                                            |
+| --- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| P21 | Audit queries without record numbers in the query string | Activity tabs and the audit viewer send account and customer numbers as `entityId`, which reach proxy and server logs | Accept the filters in a `POST /audit/activity/search` body, as `POST /accounts/search` does |

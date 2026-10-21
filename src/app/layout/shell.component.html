@@ -48,43 +48,28 @@
     }
   </div>
 
-  <button
-    type="button"
-    class="user"
-    nz-dropdown
-    nzTrigger="click"
-    [nzDropdownMenu]="userMenu"
-    aria-haspopup="menu"
-  >
+  <button type="button" class="user" [cdkMenuTriggerFor]="userMenu">
     <span nz-icon nzType="user" aria-hidden="true"></span>
     <span class="user-name">{{ firstName() }}</span>
     <span nz-icon nzType="down" aria-hidden="true"></span>
     <span class="ib-visually-hidden">Account menu</span>
   </button>
-  <nz-dropdown-menu #userMenu="nzDropdownMenu">
-    <ul nz-menu role="menu">
-      <li nz-menu-item class="menu-meta" nzDisabled role="presentation">
-        {{ me()?.fullName }} ({{ me()?.staffCode }})
-      </li>
+  <ng-template #userMenu>
+    <div cdkMenu class="ib-menu" aria-label="Account menu">
+      <div class="ib-menu-meta" role="presentation">{{ me()?.fullName }} ({{ me()?.staffCode }})</div>
       @if (branch.canSwitch()) {
-        <li
-          nz-menu-item
-          role="menuitem"
-          tabindex="0"
-          (click)="switchBranch()"
-          (keydown.enter)="switchBranch()"
-        >
+        <button type="button" cdkMenuItem class="ib-menu-item" (cdkMenuItemTriggered)="switchBranch()">
           <span nz-icon nzType="bank" aria-hidden="true"></span> Switch branch
-        </li>
+        </button>
       }
-      <li nz-menu-item role="menuitem" routerLink="/change-password">
+      <button type="button" cdkMenuItem class="ib-menu-item" routerLink="/change-password">
         <span nz-icon nzType="key" aria-hidden="true"></span> Change password
-      </li>
-      <li nz-menu-item role="menuitem" tabindex="0" (click)="signOut()" (keydown.enter)="signOut()">
+      </button>
+      <button type="button" cdkMenuItem class="ib-menu-item" (cdkMenuItemTriggered)="signOut()">
         <span nz-icon nzType="logout" aria-hidden="true"></span> Sign out
-      </li>
-    </ul>
-  </nz-dropdown-menu>
+      </button>
+    </div>
+  </ng-template>
 </header>
 
 <div class="body" [class.body--phone]="viewport.size() === 'phone'">
@@ -160,33 +145,26 @@
         }
       </a>
     }
-    <button
-      type="button"
-      nz-dropdown
-      nzTrigger="click"
-      [nzDropdownMenu]="moreMenu"
-      nzPlacement="topRight"
-      aria-haspopup="menu"
-    >
+    <button type="button" [cdkMenuTriggerFor]="moreMenu">
       <span nz-icon nzType="menu" aria-hidden="true"></span>
       <span>More</span>
     </button>
-    <nz-dropdown-menu #moreMenu="nzDropdownMenu">
-      <ul nz-menu role="menu">
+    <ng-template #moreMenu>
+      <div cdkMenu class="ib-menu" aria-label="More">
         @for (item of moreItems(); track item.path) {
           @if (item.path !== '/dashboard') {
-            <li nz-menu-item role="menuitem" [routerLink]="item.path">
+            <button type="button" cdkMenuItem class="ib-menu-item" [routerLink]="item.path">
               <span nz-icon [nzType]="item.icon" aria-hidden="true"></span> {{ item.label }}
-            </li>
+            </button>
           }
         }
-        <li nz-menu-item role="menuitem" routerLink="/change-password">
+        <button type="button" cdkMenuItem class="ib-menu-item" routerLink="/change-password">
           <span nz-icon nzType="key" aria-hidden="true"></span> Change password
-        </li>
-        <li nz-menu-item role="menuitem" tabindex="0" (click)="signOut()" (keydown.enter)="signOut()">
+        </button>
+        <button type="button" cdkMenuItem class="ib-menu-item" (cdkMenuItemTriggered)="signOut()">
           <span nz-icon nzType="logout" aria-hidden="true"></span> Sign out
-        </li>
-      </ul>
-    </nz-dropdown-menu>
+        </button>
+      </div>
+    </ng-template>
   </nav>
 }

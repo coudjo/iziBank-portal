@@ -151,6 +151,9 @@ select.ib-input {
 }
 
 .ib-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ib-space-2);
   min-height: var(--ib-touch-target);
   padding: 0 var(--ib-space-4);
   font: inherit;
@@ -170,6 +173,13 @@ select.ib-input {
 .ib-menu-item:focus-visible {
   outline: 2px solid var(--ib-focus);
   outline-offset: -2px;
+}
+
+.ib-menu-meta {
+  padding: var(--ib-space-2) var(--ib-space-4);
+  color: var(--ib-ink-muted);
+  border-bottom: 1px solid var(--ib-line);
+  margin-bottom: var(--ib-space-1);
 }
 
 // Shell top bar pieces (kept global so the shell's own styles stay within the component budget).

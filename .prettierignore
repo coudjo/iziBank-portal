@@ -7,3 +7,5 @@ api/openapi.json
 api/
 docs/plans/
 CLAUDE.md
+docker/*.inc
+docker/nginx.conf
