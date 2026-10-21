@@ -156,3 +156,23 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   started can be removed. Rate changes apply at once; whether they need a second person is open on the API
   (open decision Q7).
 - The sidebar is sticky under the top bar, so no link slides under it while a long page scrolls.
+
+## Security administration (F11a)
+
+- Staff (SEC/USERS), role groups (SEC/PERMISSIONS) and sessions (SEC/SESSIONS) are under Administration. Every page,
+  tab and action checks its own permission, so an auditor reads staff and sessions without seeing Role groups or
+  any action.
+- Nobody changes their own record, role groups or password here: the page says so and offers no action (API
+  `staff.self-change`, `security.self-assignment`). Signing yourself out is not offered either.
+- A new staff member has no role groups. After creating one the page opens their Role groups tab. The first
+  password is checked live against the API's rules, and the screen says it must be changed at first sign-in. A
+  teller needs a till account: an approved asset account in their home branch.
+- Role groups are chosen per branch. The matrix below shows the effective permissions of the groups ticked, with a
+  Granted by column naming the group behind each one. A module's "(all)" row covers its sub-modules, as the API
+  does. Before sending, the page lists what changes in words ("Adds View, Approve on Reference data › Lookups").
+  The change waits for a second administrator; while it waits, that branch is read-only with a link to it.
+- Editing a role group shows the same summary and says how many people it affects. Ticking any permission ticks
+  View, and clearing View clears the row, because the API needs View for anything else. A group that cannot be
+  edited (a change waiting, inactive, or no permission) shows the read-only matrix rather than greyed checkboxes.
+- Disable and Reset password are in the record's actions menu with a confirmation. The API takes no reason for
+  either yet (api-requests P17). Force sign-out is on the Sessions page and the staff record's Sessions tab.

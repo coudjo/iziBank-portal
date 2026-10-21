@@ -57,3 +57,11 @@ Starting list: frontend plan section 11 and UX design section 9.
 | #   | Need                                 | Used by                                                                                 | Suggested change                           |
 | --- | ------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------ |
 | P14 | Ledger accounts filtered by currency | Product control account picker (loads 100 accounts and filters by currency on the page) | Add `currencyId` to `GET /ledger-accounts` |
+
+## Notes from F11a (2026-10-20)
+
+| #   | Need                                                           | Used by                                                                                   | Suggested change                                                                                                            |
+| --- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| P15 | Staff search term out of the URL                               | Staff list search (a staff member's name in a query string reaches proxy and server logs) | Accept the term in a `POST /staff-users/search` body, as `POST /accounts/search` does                                       |
+| P16 | Sessions of one staff member                                   | Staff record Sessions tab (reads the latest 100 sessions and filters on the page)         | Add `staffUserId` to `GET /sessions`                                                                                        |
+| P17 | A reason when disabling a staff member or resetting a password | Staff record actions (UX 6.10 step 6: "each with a reason")                               | Add `reason` to `PUT /staff-users/{id}` when `isDisabled` changes, and to `reset-secret-key`; record it in the activity log |

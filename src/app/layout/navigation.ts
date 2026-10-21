@@ -61,7 +61,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'user',
     section: 'admin',
     permission: { module: 'SEC', subModule: 'USERS', action: 'view' },
-    placeholder: true,
   },
   {
     label: 'Role groups',
@@ -69,7 +68,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'safety-certificate',
     section: 'admin',
     permission: { module: 'SEC', subModule: 'PERMISSIONS', action: 'view' },
-    placeholder: true,
   },
   {
     label: 'Sessions',
@@ -77,7 +75,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'solution',
     section: 'admin',
     permission: { module: 'SEC', subModule: 'SESSIONS', action: 'view' },
-    placeholder: true,
   },
   {
     label: 'Audit',

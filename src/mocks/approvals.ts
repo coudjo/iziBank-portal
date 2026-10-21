@@ -354,6 +354,10 @@ export function approvalHandlers(
       if (row.requestedByUserId === who(request)) {
         return problem(409, 'supervision.self-approval');
       }
+      const refused = changeAppliers.map((apply) => apply(row)).find((outcome) => outcome !== null);
+      if (refused) {
+        return problem(409, refused);
+      }
       Object.assign(row, { status: 'APPROVED', ...decided(request) });
       save();
       return new HttpResponse(null, { status: 204 });
@@ -379,4 +383,39 @@ export function approvalHandlers(
 /** A ledger account by id, for the product mocks' control account. */
 export function ledgerById(id: number | null | undefined): LedgerAccountView | undefined {
   return state.ledger.find((row) => row.ledgerAccountId === id);
+}
+
+/**
+ * Applies an approved change to another mock (security registers one for role groups and assignments). Returns a
+ * problem type to refuse the approval, or null.
+ */
+export const changeAppliers: ((change: ChangeRequestView) => string | null)[] = [];
+
+/** Records a change request waiting for approval, as the API does for security changes (HTTP 202). */
+export function addChange(
+  change: Pick<ChangeRequestView, 'entityType' | 'entityId' | 'changeType' | 'before' | 'proposed'>,
+  requestedByUserId: number,
+  requestedByName: string,
+): number {
+  const changeRequestId = Math.max(700, ...state.changes.map((row) => row.changeRequestId)) + 1;
+  state.changes.push({
+    ...change,
+    changeRequestId,
+    status: 'PENDING',
+    requestedByUserId,
+    requestedByName,
+    requestedOn: new Date().toISOString(),
+    decidedByUserId: null,
+    decidedOn: null,
+    decisionNote: null,
+  });
+  save();
+  return changeRequestId;
+}
+
+/** The pending change for a record, if any. */
+export function pendingChange(entityType: string, entityId: string): ChangeRequestView | undefined {
+  return state.changes.find(
+    (row) => row.status === 'PENDING' && row.entityType === entityType && row.entityId === entityId,
+  );
 }

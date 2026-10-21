@@ -3,3 +3,4 @@ export { ApprovalBarComponent } from './approval-bar.component';
 export { ApprovalsService } from './approvals.service';
 export { ChangesPanelComponent } from './changes-panel.component';
 export { diffJson, type FieldChange } from './json-diff';
+export { ApprovalsClient } from './approvals.client';

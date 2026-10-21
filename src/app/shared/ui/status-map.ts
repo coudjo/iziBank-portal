@@ -11,7 +11,7 @@ export interface StatusDefinition {
   explanation: string;
 }
 
-export type StatusDomain = 'approval' | 'kyc' | 'account' | 'businessDay';
+export type StatusDomain = 'approval' | 'kyc' | 'account' | 'businessDay' | 'staff' | 'session' | 'record';
 
 export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, StatusDefinition>>>> = {
   approval: {
@@ -116,6 +116,54 @@ export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, S
       icon: 'sync',
       label: 'End of day running',
       explanation: 'End of day is in progress. Some actions wait until it finishes.',
+    },
+  },
+  staff: {
+    ACTIVE: {
+      family: 'success',
+      icon: 'check-circle',
+      label: 'Active',
+      explanation: 'This staff member can sign in.',
+    },
+    MUST_CHANGE: {
+      family: 'warning',
+      icon: 'key',
+      label: 'Must change password',
+      explanation: 'The next sign-in asks for a new password.',
+    },
+    DISABLED: {
+      family: 'neutral',
+      icon: 'stop',
+      label: 'Disabled',
+      explanation: 'This staff member cannot sign in until enabled again.',
+    },
+  },
+  session: {
+    OPEN: {
+      family: 'success',
+      icon: 'check-circle',
+      label: 'Signed in',
+      explanation: 'The session is open.',
+    },
+    ENDED: {
+      family: 'neutral',
+      icon: 'logout',
+      label: 'Ended',
+      explanation: 'The session has ended.',
+    },
+  },
+  record: {
+    ACTIVE: {
+      family: 'success',
+      icon: 'check-circle',
+      label: 'Active',
+      explanation: 'In use.',
+    },
+    INACTIVE: {
+      family: 'neutral',
+      icon: 'minus-circle',
+      label: 'Inactive',
+      explanation: 'No longer in use. It stays for history.',
     },
   },
 };

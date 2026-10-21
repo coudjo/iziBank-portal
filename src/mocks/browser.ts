@@ -3,6 +3,7 @@ import { resetAccounts } from './accounts';
 import { endSessions, handlers, setBusinessDay } from './handlers';
 import { failNextUpload } from './kyc';
 import { dropNextCreate, resetParties, setOverviewFailure } from './parties';
+import { resetSecurity } from './security';
 
 export const worker = setupWorker(...handlers);
 
@@ -15,4 +16,5 @@ export const worker = setupWorker(...handlers);
   resetParties,
   failNextUpload,
   resetAccounts,
+  resetSecurity,
 };

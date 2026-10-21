@@ -4,6 +4,7 @@ import { BRANCHES, HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from
 import { accountHandlers } from './accounts';
 import { approvalHandlers } from './approvals';
 import { partyHandlers } from './parties';
+import { securityHandlers, staffDisabled } from './security';
 
 /**
  * Mock API for development and end-to-end tests, following api/openapi.json and api/problem-types.md.
@@ -136,7 +137,7 @@ export const handlers = [
     if (user?.locked) {
       return problem(401, 'auth.locked', { retryAfterSeconds: 720 });
     }
-    if (!user || user.secret !== body.secretKey) {
+    if (!user || user.secret !== body.secretKey || staffDisabled(user.staffUserId)) {
       return problem(401, 'auth.invalid-credentials');
     }
     state.endedReason = undefined;
@@ -213,6 +214,11 @@ export const handlers = [
     (request) => caller(request)?.staffUserId ?? null,
   ),
   ...approvalHandlers(
+    base,
+    (request) => (caller(request) ? null : ended()),
+    (request) => caller(request)?.staffUserId ?? null,
+  ),
+  ...securityHandlers(
     base,
     (request) => (caller(request) ? null : ended()),
     (request) => caller(request)?.staffUserId ?? null,

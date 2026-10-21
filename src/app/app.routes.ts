@@ -74,6 +74,10 @@ export const routes: Routes = [
         canMatch: [canApprove],
         loadChildren: () => import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),
       },
+      {
+        path: 'admin',
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+      },
       ...placeholders,
       ...devOnly,
       {
