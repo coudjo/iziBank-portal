@@ -508,7 +508,12 @@ function search(term: string, branchId: number | null, productId: number | null,
           item.view.accountNumber.startsWith(term) ||
           item.view.holders.some(
             (holder) =>
-              holder.partyNumber.startsWith(term) || holder.displayName.toLowerCase().startsWith(lower),
+              holder.partyNumber.startsWith(term) ||
+              holder.displayName.toLowerCase().startsWith(lower) ||
+              holder.displayName
+                .toLowerCase()
+                .split(' ')
+                .some((word) => word.startsWith(lower)),
           )) &&
         (!branchId || item.view.branchId === branchId) &&
         (!productId || item.view.productId === productId) &&

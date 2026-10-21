@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { NzModalRef } from 'ng-zorro-antd/modal';
-import type { PartySearchRow } from '../core/api/api-types';
+import type { AccountListRow, PartySearchRow } from '../core/api/api-types';
 import { toApiProblem } from '../core/errors/api-problem';
 import { messageFor } from '../core/errors/error-catalog';
 import { searchTerm } from '../core/formats/phone';
+import { AccountFiltersStore, AccountsClient } from '../features/accounts';
 import { CustomerFiltersStore, CustomersClient, approvalCode, partyTypeLabel } from '../features/customers';
+import { PermissionService } from '../core/permissions/permission.service';
 import { StatusChipComponent } from '../shared/ui';
 
 const MIN_LENGTH = 2;
@@ -13,8 +15,9 @@ const DEBOUNCE_MS = 250;
 const LIMIT = 8;
 
 /**
- * Global search (UX 4.1, frontend plan 7.3, F3-04): one query, results grouped by kind. Customers now; accounts
- * join when the accounts API exists (A6). ID numbers in results are masked by the API.
+ * Global search (UX 4.1, frontend plan 7.3, F3-04, P12): one query searches customers and accounts together, and
+ * the results are grouped by kind in one listbox. Each kind is searched only with its view permission. Both searches
+ * are POSTs, so the term never reaches a URL. ID numbers in results are masked by the API.
  */
 @Component({
   selector: 'ib-search-dialog',
@@ -47,11 +50,16 @@ const LIMIT = 8;
       margin: 0 0 var(--ib-space-2);
     }
     [role='listbox'] {
-      list-style: none;
-      margin: 0;
-      padding: 0;
       max-height: min(60vh, 28rem);
       overflow-y: auto;
+    }
+    [role='listbox'] .group:first-child {
+      margin-top: 0;
+    }
+    .more {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 var(--ib-space-4);
     }
     [role='option'] {
       padding: var(--ib-space-2) var(--ib-space-3);
@@ -95,9 +103,7 @@ const LIMIT = 8;
   `,
   template: `
     <label class="field" for="ib-global-search">Search customers or accounts</label>
-    <p class="hint" id="ib-global-search-hint">
-      Customer number, name, mobile or ID number. At least 2 characters.
-    </p>
+    <p class="hint" id="ib-global-search-hint">{{ hint() }} At least 2 characters.</p>
     <input
       data-autofocus
       id="ib-global-search"
@@ -108,8 +114,8 @@ const LIMIT = 8;
       spellcheck="false"
       aria-autocomplete="list"
       aria-describedby="ib-global-search-hint"
-      aria-controls="ib-search-customers"
-      [attr.aria-expanded]="rows().length > 0"
+      aria-controls="ib-search-results"
+      [attr.aria-expanded]="options().length > 0"
       [attr.aria-activedescendant]="activeId()"
       (input)="typed($event)"
       (keydown)="key($event)"
@@ -117,20 +123,20 @@ const LIMIT = 8;
 
     <p class="status" aria-live="polite">{{ status() }}</p>
 
-    @if (rows().length > 0) {
-      <div class="group">
-        <p class="group-title" id="ib-search-customers-title">Customers</p>
-        <ul id="ib-search-customers" role="listbox" aria-labelledby="ib-search-customers-title">
-          @for (row of rows(); track row.partyId; let index = $index) {
-            <li
+    <div id="ib-search-results" role="listbox" aria-label="Search results" [hidden]="options().length === 0">
+      @if (customers().length > 0) {
+        <div class="group" role="group" aria-label="Customers">
+          <p class="group-title" aria-hidden="true">Customers</p>
+          @for (row of customers(); track row.partyId; let index = $index) {
+            <div
               role="option"
               tabindex="-1"
               [id]="'ib-search-option-' + index"
               [class.active]="index === active()"
               [attr.aria-selected]="index === active()"
-              (click)="open(row)"
+              (click)="choose(index)"
+              (keydown.enter)="choose(index)"
               (mousemove)="active.set(index)"
-              (keydown.enter)="open(row)"
             >
               <div class="top">
                 <span>{{ row.displayName }}</span>
@@ -144,11 +150,49 @@ const LIMIT = 8;
                 <ib-status-chip domain="kyc" [code]="row.effectiveKycStatusCode" />
                 <ib-status-chip domain="approval" [code]="approval(row.supervisionState)" />
               </div>
-            </li>
+            </div>
           }
-        </ul>
-        @if (total() > rows().length) {
-          <button type="button" class="all" (click)="showAll()">Show all {{ total() }} customers</button>
+        </div>
+      }
+      @if (accounts().length > 0) {
+        <div class="group" role="group" aria-label="Accounts">
+          <p class="group-title" aria-hidden="true">Accounts</p>
+          @for (row of accounts(); track row.accountId; let index = $index) {
+            <div
+              role="option"
+              tabindex="-1"
+              [id]="'ib-search-option-' + (customers().length + index)"
+              [class.active]="customers().length + index === active()"
+              [attr.aria-selected]="customers().length + index === active()"
+              (click)="choose(customers().length + index)"
+              (keydown.enter)="choose(customers().length + index)"
+              (mousemove)="active.set(customers().length + index)"
+            >
+              <div class="top">
+                <span>{{ row.accountName }}</span>
+                <span class="ib-num">{{ row.accountNumber }}</span>
+              </div>
+              <div class="meta">
+                <span>{{ row.productName }}</span>
+                <ib-status-chip domain="account" [code]="row.status" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (customerTotal() > customers().length || accountTotal() > accounts().length) {
+      <div class="more">
+        @if (customerTotal() > customers().length) {
+          <button type="button" class="all" (click)="showAllCustomers()">
+            Show all {{ customerTotal() }} customers
+          </button>
+        }
+        @if (accountTotal() > accounts().length) {
+          <button type="button" class="all" (click)="showAllAccounts()">
+            Show all {{ accountTotal() }} accounts
+          </button>
         }
       </div>
     }
@@ -156,17 +200,41 @@ const LIMIT = 8;
 })
 export class SearchDialogComponent {
   private readonly ref = inject<NzModalRef<SearchDialogComponent, void>>(NzModalRef);
-  private readonly client = inject(CustomersClient);
-  private readonly filters = inject(CustomerFiltersStore);
+  private readonly customersClient = inject(CustomersClient);
+  private readonly accountsClient = inject(AccountsClient);
+  private readonly customerFilters = inject(CustomerFiltersStore);
+  private readonly accountFilters = inject(AccountFiltersStore);
+  private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
 
-  protected readonly rows = signal<PartySearchRow[]>([]);
-  protected readonly total = signal(0);
+  /** Each kind is searched only when the user may see it (deny by default). */
+  private readonly canCustomers = this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'view' });
+  private readonly canAccounts = this.permissions.can({
+    module: 'ACC',
+    subModule: 'ACCOUNT',
+    action: 'view',
+  });
+
+  protected readonly customers = signal<PartySearchRow[]>([]);
+  protected readonly accounts = signal<AccountListRow[]>([]);
+  protected readonly customerTotal = signal(0);
+  protected readonly accountTotal = signal(0);
   protected readonly active = signal(-1);
   protected readonly query = signal('');
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  protected readonly options = computed<Option[]>(() => [
+    ...this.customers().map((row): Option => ({ kind: 'customer', row })),
+    ...this.accounts().map((row): Option => ({ kind: 'account', row })),
+  ]);
+  protected readonly hint = computed(() =>
+    this.canCustomers && this.canAccounts
+      ? 'Customer number, account number, name, mobile or ID number.'
+      : this.canAccounts
+        ? 'Account number, customer number or customer name.'
+        : 'Customer number, name, mobile or ID number.',
+  );
   protected readonly activeId = computed(() =>
     this.active() >= 0 ? `ib-search-option-${this.active()}` : null,
   );
@@ -180,8 +248,18 @@ export class SearchDialogComponent {
     if (this.loading()) {
       return 'Searching…';
     }
-    const count = this.total();
-    return count === 0 ? 'No customers match.' : `${count} ${count === 1 ? 'customer' : 'customers'} found.`;
+    const parts = [
+      this.canCustomers ? count(this.customerTotal(), 'customer', 'customers') : null,
+      this.canAccounts ? count(this.accountTotal(), 'account', 'accounts') : null,
+    ].filter((part): part is string => part !== null);
+    if (this.customerTotal() + this.accountTotal() === 0) {
+      return this.canCustomers && this.canAccounts
+        ? 'No customers or accounts match.'
+        : this.canAccounts
+          ? 'No accounts match.'
+          : 'No customers match.';
+    }
+    return `${parts.join(' and ')} found.`;
   });
 
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -199,9 +277,7 @@ export class SearchDialogComponent {
     }
     if (text.trim().length < MIN_LENGTH) {
       this.request++;
-      this.rows.set([]);
-      this.total.set(0);
-      this.active.set(-1);
+      this.clearResults();
       this.loading.set(false);
       return;
     }
@@ -210,59 +286,91 @@ export class SearchDialogComponent {
   }
 
   protected key(event: KeyboardEvent): void {
-    const count = this.rows().length;
-    if (event.key === 'ArrowDown' && count > 0) {
+    const total = this.options().length;
+    if (event.key === 'ArrowDown' && total > 0) {
       event.preventDefault();
-      this.active.set((this.active() + 1) % count);
+      this.active.set((this.active() + 1) % total);
       this.scrollActive();
-    } else if (event.key === 'ArrowUp' && count > 0) {
+    } else if (event.key === 'ArrowUp' && total > 0) {
       event.preventDefault();
-      this.active.set(this.active() <= 0 ? count - 1 : this.active() - 1);
+      this.active.set(this.active() <= 0 ? total - 1 : this.active() - 1);
       this.scrollActive();
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      const row = this.rows()[this.active()];
-      if (row) {
-        this.open(row);
+      if (this.options()[this.active()]) {
+        this.choose(this.active());
       } else if (this.query().trim().length >= MIN_LENGTH) {
-        this.showAll();
+        if (this.canCustomers) {
+          this.showAllCustomers();
+        } else if (this.canAccounts) {
+          this.showAllAccounts();
+        }
       }
     }
   }
 
-  protected open(row: PartySearchRow): void {
+  protected choose(index: number): void {
+    const option = this.options()[index];
+    if (!option) {
+      return;
+    }
     this.ref.close();
-    void this.router.navigate(['/customers', row.partyId]);
+    void this.router.navigate(
+      option.kind === 'customer' ? ['/customers', option.row.partyId] : ['/accounts', option.row.accountId],
+    );
   }
 
-  protected showAll(): void {
-    this.filters.clear();
-    this.filters.update({ q: this.query().trim() });
+  protected showAllCustomers(): void {
+    this.customerFilters.clear();
+    this.customerFilters.update({ q: this.query().trim() });
     this.ref.close();
     void this.router.navigateByUrl('/customers');
   }
 
+  protected showAllAccounts(): void {
+    this.accountFilters.search(this.query());
+    this.ref.close();
+    void this.router.navigateByUrl('/accounts');
+  }
+
+  /**
+   * Both kinds are searched together. A failure in one still shows the other's results; the message says what could
+   * not be searched.
+   */
   private async search(text: string): Promise<void> {
     const id = ++this.request;
     this.error.set(null);
-    try {
-      const page = await this.client.search({ q: searchTerm(text), page: 1, pageSize: LIMIT });
-      if (id === this.request) {
-        this.rows.set(page.items);
-        this.total.set(page.totalCount);
-        this.active.set(page.items.length > 0 ? 0 : -1);
-      }
-    } catch (failure) {
-      if (id === this.request) {
-        this.rows.set([]);
-        this.total.set(0);
-        this.error.set(messageFor(toApiProblem(failure)));
-      }
-    } finally {
-      if (id === this.request) {
-        this.loading.set(false);
-      }
+    const [customers, accounts] = await Promise.allSettled([
+      this.canCustomers
+        ? this.customersClient.search({ q: searchTerm(text), page: 1, pageSize: LIMIT })
+        : Promise.resolve(null),
+      this.canAccounts
+        ? this.accountsClient.search({ q: text.trim(), page: 1, pageSize: LIMIT })
+        : Promise.resolve(null),
+    ]);
+    if (id !== this.request) {
+      return;
     }
+    const customerPage = customers.status === 'fulfilled' ? customers.value : null;
+    const accountPage = accounts.status === 'fulfilled' ? accounts.value : null;
+    this.customers.set(customerPage?.items ?? []);
+    this.customerTotal.set(customerPage?.totalCount ?? 0);
+    this.accounts.set(accountPage?.items ?? []);
+    this.accountTotal.set(accountPage?.totalCount ?? 0);
+    this.active.set(this.options().length > 0 ? 0 : -1);
+    const failed = [customers, accounts].find((result) => result.status === 'rejected');
+    if (failed) {
+      this.error.set(messageFor(toApiProblem(failed.reason)));
+    }
+    this.loading.set(false);
+  }
+
+  private clearResults(): void {
+    this.customers.set([]);
+    this.accounts.set([]);
+    this.customerTotal.set(0);
+    this.accountTotal.set(0);
+    this.active.set(-1);
   }
 
   private scrollActive(): void {
@@ -274,4 +382,10 @@ export class SearchDialogComponent {
 
   protected readonly typeLabel = partyTypeLabel;
   protected readonly approval = approvalCode;
+}
+
+type Option = { kind: 'customer'; row: PartySearchRow } | { kind: 'account'; row: AccountListRow };
+
+function count(value: number, one: string, many: string): string {
+  return `${value} ${value === 1 ? one : many}`;
 }

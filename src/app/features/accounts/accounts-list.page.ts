@@ -29,6 +29,7 @@ import {
   StatusChipComponent,
 } from '../../shared/ui';
 import { ACCOUNT_STATUSES } from './account-labels';
+import { AccountFiltersStore } from './account-filters.store';
 import { AccountsClient } from './accounts.client';
 
 const PAGE_SIZE = 25;
@@ -101,6 +102,7 @@ const PAGE_SIZE = 25;
           type="search"
           autocomplete="off"
           spellcheck="false"
+          [value]="term()"
           (input)="typed($event)"
           (keydown.enter)="searchNow($event)"
         />
@@ -173,9 +175,10 @@ export class AccountsListPage {
 
   protected readonly pageSize = PAGE_SIZE;
   protected readonly statuses = ACCOUNT_STATUSES;
-  protected readonly term = signal('');
-  protected readonly status = signal<string | null>(null);
-  protected readonly page = signal(1);
+  private readonly filters = inject(AccountFiltersStore);
+  protected readonly term = this.filters.term;
+  protected readonly status = this.filters.status;
+  protected readonly page = this.filters.page;
   protected readonly rows = signal<AccountListRow[]>([]);
   protected readonly total = signal(0);
   protected readonly loading = signal(true);

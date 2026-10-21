@@ -49,7 +49,7 @@ Starting list: frontend plan section 11 and UX design section 9.
 | #   | Need                                            | Used by                                              | Suggested change                                                                                    |
 | --- | ----------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | P11 | Who opened an account, on account list rows     | Approvals inbox Accounts tab: four-eyes in the badge | Add `openedByUserId` and `openedByName` to `AccountListRow`                                         |
-| P12 | Accounts in the global search                   | Global search overlay (UX 4.1)                       | None needed: `POST /accounts/search` serves it; the overlay change is portal work (F9 follow-up)    |
+| P12 | Accounts in the global search                   | Global search overlay (UX 4.1)                       | Done 2026-10-21 with `POST /accounts/search`; no API change                                         |
 | P13 | Eligibility of a group's members as signatories | Open account, group signatories                      | Add `hasEffectiveSignature`, KYC and approval state to `GroupMemberView` (the portal searches each) |
 
 ## Notes from F10 (2026-10-17)

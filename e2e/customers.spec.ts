@@ -145,16 +145,64 @@ test.describe('Global search (F3-04)', () => {
     await expect(box).toBeFocused();
 
     await box.fill('Darko');
-    const results = dialog.getByRole('listbox', { name: 'Customers' });
-    await expect(results.getByRole('option')).toHaveCount(2);
-    await expect(results).toContainText('****01-1');
+    const results = dialog.getByRole('listbox', { name: 'Search results' });
+    const customers = results.getByRole('group', { name: 'Customers' });
+    await expect(customers.getByRole('option')).toHaveCount(2);
+    await expect(customers).toContainText('****01-1');
     await expect(results).not.toContainText('GHA-700000001-1');
+    const accounts = results.getByRole('group', { name: 'Accounts' });
+    await expect(accounts).toContainText('1000000000001');
+    await expect(dialog.getByText(/2 customers and \d+ accounts found\./)).toBeVisible();
     await expectNoAxeViolations(page);
 
     await box.press('ArrowDown');
     await box.press('Enter');
     await expect(dialog).toBeHidden();
     await expect(page).toHaveURL(/\/customers\/10[14]\/overview$/);
+  });
+
+  test('finds an account by number and opens it; the arrow keys move across both groups (P12)', async ({
+    page,
+  }, info) => {
+    await signIn(page, USERS.teller);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    if (isPhone(info)) {
+      await page.getByRole('button', { name: 'Search customers or accounts' }).click();
+    } else {
+      await page.keyboard.press('Control+k');
+    }
+    const dialog = page.getByRole('dialog', { name: 'Search' });
+    const box = dialog.getByRole('combobox', { name: 'Search customers or accounts' });
+
+    await box.fill('2000000000003');
+    const accounts = dialog.getByRole('group', { name: 'Accounts' });
+    await expect(accounts.getByRole('option')).toHaveCount(1);
+    await expect(dialog.getByRole('group', { name: 'Customers' })).toHaveCount(0);
+    await expect(accounts).toContainText('Business current');
+    await expect(dialog.getByText('0 customers and 1 account found.')).toBeVisible();
+    await expectNoAxeViolations(page);
+
+    await box.press('Enter');
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(/\/accounts\/203(\/|$)/);
+  });
+
+  test('without account access only customers are searched (deny by default)', async ({ page }, info) => {
+    await signIn(page, USERS.kyc);
+    await expect(page).toHaveURL(/\/dashboard$/);
+    if (isPhone(info)) {
+      await page.getByRole('button', { name: 'Search customers or accounts' }).click();
+    } else {
+      await page.keyboard.press('/');
+    }
+    const dialog = page.getByRole('dialog', { name: 'Search' });
+    await expect(
+      dialog.getByText('Customer number, name, mobile or ID number.', { exact: false }),
+    ).toBeVisible();
+    await dialog.getByRole('combobox', { name: 'Search customers or accounts' }).fill('Darko');
+    await expect(dialog.getByRole('group', { name: 'Customers' }).getByRole('option')).toHaveCount(2);
+    await expect(dialog.getByRole('group', { name: 'Accounts' })).toHaveCount(0);
+    await expect(dialog.getByText('2 customers found.')).toBeVisible();
   });
 
   test('Ctrl+K opens search and ? lists the shortcuts', async ({ page }) => {

@@ -63,7 +63,10 @@ export class ShellComponent {
   });
   protected readonly canSearch = computed(() => {
     this.me();
-    return this.permissions.can({ module: 'PTY', subModule: 'PARTY', action: 'view' });
+    return this.permissions.canAny([
+      { module: 'PTY', subModule: 'PARTY', action: 'view' },
+      { module: 'ACC', subModule: 'ACCOUNT', action: 'view' },
+    ]);
   });
   private overlayOpen = false;
 
