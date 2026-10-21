@@ -95,6 +95,10 @@ export const routes: Routes = [
         loadChildren: () => import('./features/reference/reference.routes').then((m) => m.REFERENCE_ROUTES),
       },
       {
+        path: 'audit',
+        loadChildren: () => import('./features/audit/audit.routes').then((m) => m.AUDIT_ROUTES),
+      },
+      {
         path: 'admin',
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
       },

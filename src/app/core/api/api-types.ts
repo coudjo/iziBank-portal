@@ -89,3 +89,5 @@ export type HolidayView = Schemas['HolidayView'];
 export type BusinessDayView = Schemas['BusinessDayView'];
 export type BusinessDayPage = Schemas['PagedResultOfBusinessDayView'];
 export type LookupTypeInfo = Schemas['LookupTypeInfo'];
+export type ChangeRow = Schemas['ChangeRow'];
+export type ChangePage = Schemas['PagedResultOfChangeRow'];

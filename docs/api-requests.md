@@ -72,3 +72,9 @@ Starting list: frontend plan section 11 and UX design section 9.
 | --- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | P18 | Staff who can be designated as credit officers, for someone without SEC/USERS view | Designate credit officer (a supervisor holds PTY/CREDIT_OFFICERS add but cannot list staff)         | `GET /credit-officers/candidates` (active staff not already officers), under PTY/CREDIT_OFFICERS add                   |
 | P19 | The next working day, or the weekend days                                          | Open day proposal (the portal assumes Saturday and Sunday, as `Calendar:WeekendDays` is configured) | `GET /branches/{id}/business-days/next` returning the proposed date, or the weekend days in `GET /institution-profile` |
+
+## Notes from F11c (2026-10-21)
+
+| #   | Need                               | Used by                                               | Suggested change                       |
+| --- | ---------------------------------- | ----------------------------------------------------- | -------------------------------------- |
+| P20 | Filter the activity log by outcome | Audit activity filters (UX 6.12 step 1 lists outcome) | Add `outcome` to `GET /audit/activity` |

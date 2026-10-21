@@ -13,29 +13,9 @@ import {
 } from '../../shared/ui';
 import { AccountRecordStore } from './account-record.store';
 import { AccountsClient } from './accounts.client';
+import { eventLabel, isSuccess } from '../../core/audit/audit-labels';
 
 const PAGE_SIZE = 25;
-
-/** Readable names for activity codes (API EventCodes). */
-const EVENTS: Readonly<Record<string, string>> = {
-  VIEW_RECORD: 'Viewed the record',
-  SEARCH: 'Searched',
-  CREATE_RECORD: 'Created',
-  UPDATE_RECORD: 'Changed',
-  DELETE_RECORD: 'Deleted',
-  SUPERVISE_APPROVE: 'Approved',
-  SUPERVISE_REJECT: 'Rejected',
-  KYC_VERIFY: 'Verified KYC and approved',
-  KYC_REJECT: 'Rejected KYC',
-  PERMISSION_DENIED: 'Was refused',
-  ACCOUNT_OPEN: 'Opened the account',
-  ACCOUNT_CLOSE: 'Closed the account',
-  ACCOUNT_FREEZE: 'Froze the account',
-  ACCOUNT_UNFREEZE: 'Unfroze the account',
-  BALANCE_HOLD: 'Held an amount',
-  BALANCE_RELEASE: 'Released a hold',
-  DORMANCY_CHANGE: 'Changed dormancy',
-};
 
 /**
  * Activity tab (UX 7.4, F9): who did what to this account, from the activity log. Needs audit permission; the
@@ -104,7 +84,7 @@ const EVENTS: Readonly<Record<string, string>> = {
         <ng-template ibColumn="Staff" let-row>{{ row.staffCode ?? 'System' }}</ng-template>
         <ng-template ibColumn="What" let-row>
           {{ label(row.eventCode) }}
-          @if (row.outcome !== 'SUCCESS') {
+          @if (!succeeded(row.outcome)) {
             <span class="failed"> ({{ row.outcome.toLowerCase() }})</span>
           }
         </ng-template>
@@ -118,7 +98,12 @@ const EVENTS: Readonly<Record<string, string>> = {
         </ng-template>
         <ng-template ibCard let-row>
           <div class="card-top">
-            <span>{{ label(row.eventCode) }}</span>
+            <span
+              >{{ label(row.eventCode) }}
+              @if (!succeeded(row.outcome)) {
+                <span class="failed"> ({{ row.outcome.toLowerCase() }})</span>
+              }
+            </span>
             <span class="ib-num">{{ when(row.eventTimestamp) }}</span>
           </div>
           <div>{{ row.staffCode ?? 'System' }}</div>
@@ -158,7 +143,11 @@ export class AccountActivityTab {
   }
 
   protected label(code: string): string {
-    return EVENTS[code] ?? code.replace(/_/g, ' ').toLowerCase();
+    return eventLabel(code);
+  }
+
+  protected succeeded(outcome: string): boolean {
+    return isSuccess(outcome);
   }
 
   protected pretty(json: string): string {

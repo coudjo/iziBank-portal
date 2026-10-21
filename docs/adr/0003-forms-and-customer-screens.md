@@ -195,3 +195,16 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   system values carry a lock and cannot be deactivated. Saving a value clears the portal's cached copy of that list.
 - Credit officers are designated from the staff list, which needs SEC/USERS view; without it the dialog says to
   ask an administrator (api-requests P18). A credit officer is disabled, not removed.
+
+## Audit (F11c)
+
+- Audit (SEC/AUDIT view) has two tabs, Activity and Data changes, under a notice that viewing is recorded. The API
+  logs every query as AUDIT_VIEW, so filters apply only when the user presses Apply, not as they type.
+- Activity rows read as a sentence ("Opened the account · Account 2000000000003") with the outcome as a chip and the
+  raw request details in an expandable block. The API has no outcome filter yet (api-requests P20).
+- Data-change rows show a small table of field, before and after. An addition has only after values and a removal
+  only before values. A value the API redacted shows as "Hidden" with a lock, never the marker text.
+- Event names and the success check are shared with the customer and account Activity tabs
+  (`core/audit/audit-labels.ts`). The API sends `Success`, `Denied` and `Error`; the tabs had compared with
+  `SUCCESS`, which would have marked every real row as failed.
+- Dates are whole days in Ghana time (UTC+0): From is the start of the day, To the end of it.

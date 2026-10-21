@@ -11,7 +11,8 @@ export interface StatusDefinition {
   explanation: string;
 }
 
-export type StatusDomain = 'approval' | 'kyc' | 'account' | 'businessDay' | 'staff' | 'session' | 'record';
+export type StatusDomain =
+  'approval' | 'kyc' | 'account' | 'businessDay' | 'staff' | 'session' | 'record' | 'outcome';
 
 export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, StatusDefinition>>>> = {
   approval: {
@@ -150,6 +151,26 @@ export const STATUS_MAP: Readonly<Record<StatusDomain, Readonly<Record<string, S
       icon: 'logout',
       label: 'Ended',
       explanation: 'The session has ended.',
+    },
+  },
+  outcome: {
+    SUCCESS: {
+      family: 'success',
+      icon: 'check-circle',
+      label: 'Succeeded',
+      explanation: 'The action went through.',
+    },
+    DENIED: {
+      family: 'danger',
+      icon: 'stop',
+      label: 'Refused',
+      explanation: 'The action was refused, for example for lack of permission.',
+    },
+    ERROR: {
+      family: 'danger',
+      icon: 'close-circle',
+      label: 'Failed',
+      explanation: 'The action failed with an error.',
     },
   },
   record: {

@@ -95,10 +95,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
   {
     label: 'Audit',
-    path: '/audit/activity',
+    path: '/audit',
     icon: 'audit',
     section: 'admin',
     permission: { module: 'SEC', subModule: 'AUDIT', action: 'view' },
-    placeholder: true,
   },
 ];

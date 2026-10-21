@@ -141,7 +141,7 @@ function record(
     eventId: nextId++,
     eventTimestamp: now(),
     eventCode,
-    outcome: 'SUCCESS',
+    outcome: 'Success',
     sessionId: null,
     staffUserId,
     staffCode: STAFF[staffUserId ?? 0] ?? null,
@@ -682,6 +682,10 @@ export function kycHandlers(
         return denied;
       }
       const url = new URL(request.url);
+      if (url.searchParams.get('entityType') !== 'Party' || !url.searchParams.get('entityId')) {
+        // The audit viewer's general queries are answered by the audit mock.
+        return undefined;
+      }
       const number = url.searchParams.get('entityId');
       const page = Number(url.searchParams.get('page') ?? 1);
       const pageSize = Number(url.searchParams.get('pageSize') ?? 25);
