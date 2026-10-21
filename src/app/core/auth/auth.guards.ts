@@ -31,3 +31,9 @@ export const guestGuard: CanMatchFn = () => {
 export function requirePermission(rule: PermissionRule): CanMatchFn {
   return () => (inject(PermissionService).can(rule) ? true : inject(Router).createUrlTree(['/not-allowed']));
 }
+
+/** canMatch for a page that serves several roles: any one rule is enough. */
+export function requireAnyPermission(rules: readonly PermissionRule[]): CanMatchFn {
+  return () =>
+    inject(PermissionService).canAny(rules) ? true : inject(Router).createUrlTree(['/not-allowed']);
+}

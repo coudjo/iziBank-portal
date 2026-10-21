@@ -4,6 +4,7 @@ import { BRANCHES, HOME_BRANCH, MOCK_USERS, MockUser, groupsIn, profileOf } from
 import { accountHandlers } from './accounts';
 import { approvalHandlers } from './approvals';
 import { partyHandlers } from './parties';
+import { latestDay, referenceHandlers, setLatestDay } from './reference';
 import { securityHandlers, staffDisabled } from './security';
 
 /**
@@ -18,14 +19,7 @@ interface MockState {
   endedReason?: string;
   users: Record<number, { secret: string; mustChange: boolean }>;
   nextSession: number;
-  /** Latest business day per branch id; a missing branch has never opened a day. */
-  businessDays?: Record<number, { workingDate: string; status: string }>;
 }
-
-/** Head office has an open day; Kumasi has none, so the "Business day not open" chip can be seen. */
-const DEFAULT_BUSINESS_DAYS: Record<number, { workingDate: string; status: string }> = {
-  [HOME_BRANCH.branchId]: { workingDate: '2026-10-14', status: 'OPEN' },
-};
 
 function load(): MockState {
   try {
@@ -71,14 +65,7 @@ const sessions = {
 
 /** Test hook: set the latest business day of a branch (null: none). */
 export function setBusinessDay(branchId: number, workingDate: string | null, status = 'OPEN'): void {
-  const days = { ...(state.businessDays ?? DEFAULT_BUSINESS_DAYS) };
-  if (workingDate === null) {
-    delete days[branchId];
-  } else {
-    days[branchId] = { workingDate, status };
-  }
-  state.businessDays = days;
-  save(state);
+  setLatestDay(branchId, workingDate, status);
 }
 
 /** Test hook: end every session with a reason, as the API would after a forced logout or idle sweep. */
@@ -193,7 +180,7 @@ export const handlers = [
     if (!branch || groupsIn(user, branchId) === null) {
       return problem(403, 'auth.branch-not-allowed');
     }
-    const day = (state.businessDays ?? DEFAULT_BUSINESS_DAYS)[branchId];
+    const day = latestDay(branchId);
     return HttpResponse.json({
       branchId,
       branchCode: branch.branchCode,
@@ -203,6 +190,11 @@ export const handlers = [
     });
   }),
 
+  ...referenceHandlers(
+    base,
+    (request) => (caller(request) ? null : ended()),
+    (request) => caller(request)?.staffUserId ?? null,
+  ),
   ...partyHandlers(
     base,
     (request) => (caller(request) ? null : ended()),

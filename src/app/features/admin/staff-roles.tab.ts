@@ -153,7 +153,9 @@ import { StaffRecordStore } from './staff-record.store';
         <ib-form-field label="Branch" class="branch">
           <select ibInput ibControl [value]="branchId()" (change)="pickBranch($event)">
             @for (branch of branches(); track branch.branchId) {
-              <option [value]="branch.branchId">{{ branch.branchCode }} {{ branch.branchName }}</option>
+              <option [value]="branch.branchId" [selected]="branch.branchId === branchId()">
+                {{ branch.branchCode }} {{ branch.branchName }}
+              </option>
             }
           </select>
         </ib-form-field>

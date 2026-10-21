@@ -31,7 +31,7 @@ export const ROLE_GROUPS: Record<string, PermissionGrant[]> = {
     g('ACC', null, 'AES'),
     g('ACC', 'ACCOUNT', 'D'),
     g('ACC', 'CONDITION', 'ES'),
-    g('REF', 'CALENDAR', 'E'),
+    g('REF', 'CALENDAR', 'ES'),
     g('LED', 'CHART', 'AS'),
   ],
   ADMINISTRATOR: [
@@ -108,6 +108,14 @@ export const MOCK_USERS: MockUser[] = [
     groups: ['TELLER'],
     canSwitchBranch: true,
     otherBranches: { 2: ['AUDITOR'] },
+  },
+  {
+    staffUserId: 8,
+    staffCode: 'CO1',
+    fullName: 'Kojo Antwi',
+    secret: 'Officer-Pass1',
+    mustChange: false,
+    groups: ['FIELD_OFFICER'],
   },
   {
     staffUserId: 4,

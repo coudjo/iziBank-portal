@@ -1,4 +1,5 @@
 import type { PermissionRule } from '../core/permissions/permission.service';
+import { REFERENCE_RULES } from '../features/reference/reference-rules';
 
 export interface NavItem {
   label: string;
@@ -6,6 +7,8 @@ export interface NavItem {
   icon: string;
   section: 'main' | 'admin';
   permission?: PermissionRule;
+  /** Shown when any of these allows (a hub that serves several roles). */
+  anyOf?: readonly PermissionRule[];
   /** Screens not built yet appear only in development builds (frontend plan 7.5). */
   placeholder?: boolean;
   /** Shown in the phone bottom bar. */
@@ -75,6 +78,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: 'solution',
     section: 'admin',
     permission: { module: 'SEC', subModule: 'SESSIONS', action: 'view' },
+  },
+  {
+    label: 'Business day',
+    path: '/business-day',
+    icon: 'clock-circle',
+    section: 'admin',
+    permission: { module: 'REF', subModule: 'CALENDAR', action: 'view' },
+  },
+  {
+    label: 'Reference data',
+    path: '/reference',
+    icon: 'setting',
+    section: 'admin',
+    anyOf: REFERENCE_RULES,
   },
   {
     label: 'Audit',

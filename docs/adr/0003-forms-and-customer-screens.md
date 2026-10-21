@@ -176,3 +176,22 @@ Features use `ibInput` and `ib-icon` instead of importing NG-ZORRO.
   edited (a change waiting, inactive, or no permission) shows the read-only matrix rather than greyed checkboxes.
 - Disable and Reset password are in the record's actions menu with a confirmation. The API takes no reason for
   either yet (api-requests P17). Force sign-out is on the Sessions page and the staff record's Sessions tab.
+
+## Reference data (F11b)
+
+- Reference screens sit behind one sidebar item, Reference data, which opens a hub listing the screens the user may
+  open. Business day has its own sidebar item (and the `/business-day` path) because supervisors use it daily; it
+  is also on the hub. The hub, the routes and the sidebar read one list (`REFERENCE_SCREENS`).
+- Business day shows every branch's latest day. Open and Close act on the working branch only, as the API requires,
+  so other branches say to switch branch first. Open proposes the next working day after the last one (skipping
+  Saturdays, Sundays and holidays), lists the days skipped and why, and explains a refused date before sending.
+  The weekend days are assumed to be Saturday and Sunday, as configured on the API (api-requests P19). Close says
+  that end-of-day processing is not part of this phase. Both refresh the working date in the top bar.
+- Holidays show the year as a calendar for an overview and as a list for adding and removing; the calendar is
+  hidden from assistive technology, since the list says the same. Holidays are marked with a dot as well as a tint.
+- Currencies say which is local and what a rate means. The local flag moves by editing the currency that should
+  become local; once products exist the API refuses, and the dialog says why.
+- Lookups show one list at a time, chosen by name; the list is in the URL. Values are deactivated, never deleted;
+  system values carry a lock and cannot be deactivated. Saving a value clears the portal's cached copy of that list.
+- Credit officers are designated from the staff list, which needs SEC/USERS view; without it the dialog says to
+  ask an administrator (api-requests P18). A credit officer is disabled, not removed.

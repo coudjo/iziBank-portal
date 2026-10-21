@@ -20,4 +20,9 @@ export class LookupsService {
     }
     return rows;
   }
+
+  /** Drops a cached list after an administrator changes it. */
+  forget(type: string): void {
+    this.cache.delete(type);
+  }
 }

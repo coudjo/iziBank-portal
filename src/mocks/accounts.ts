@@ -5,6 +5,7 @@ import type {
   AccountListRow,
   AccountView,
   ClassificationOption,
+  CurrencyView,
   FreezeActionView,
   OpenAccountRequest,
   PartyAccountRow,
@@ -60,7 +61,7 @@ export const RATE_TYPES = [
   { id: 2, code: 'DEBIT', name: 'Debit', isActive: true, isCoded: true },
 ];
 
-const CURRENCIES = [
+export const CURRENCIES: CurrencyView[] = [
   { currencyId: 1, currencyCode: 'GHS', currencyName: 'Ghana cedi', exchangeRate: 1, isLocalCurrency: true },
   {
     currencyId: 2,
@@ -330,6 +331,11 @@ function save(): void {
   } catch {
     // Best effort.
   }
+}
+
+/** True once any product exists (the API then refuses to move the local currency). */
+export function productsExist(): boolean {
+  return state.products.length > 0;
 }
 
 /** Test hook: back to the seeded accounts. */
@@ -656,18 +662,7 @@ export function accountHandlers(
   signedIn: (request: Request) => Response | null,
   who: (request: Request) => number | null,
 ) {
-  const lookup = (path: string, rows: { id: number; code: string; name: string }[]) =>
-    http.get(`${base}/lookups/${path}`, ({ request }) => signedIn(request) ?? HttpResponse.json(rows));
-
   return [
-    lookup('operating-modes', OPERATING_MODES),
-    lookup('account-holder-roles', HOLDER_ROLES),
-    lookup('close-reasons', CLOSE_REASONS),
-
-    lookup('product-types', PRODUCT_TYPES),
-    lookup('rate-types', RATE_TYPES),
-    http.get(`${base}/currencies`, ({ request }) => signedIn(request) ?? HttpResponse.json(CURRENCIES)),
-
     http.get(`${base}/products`, ({ request }) => {
       const denied = signedIn(request);
       if (denied) {

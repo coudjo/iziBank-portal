@@ -81,6 +81,7 @@ export class ShellComponent {
       (item) =>
         (!item.placeholder || isDevMode()) &&
         (!item.permission || this.permissions.can(item.permission)) &&
+        (!item.anyOf || this.permissions.canAny(item.anyOf)) &&
         (!item.approvals || this.approvals.kinds().length > 0),
     );
   });

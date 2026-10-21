@@ -56,6 +56,12 @@ export function formatTimestamp(value: string | null | undefined): string {
   return match ? `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}` : value;
 }
 
+/** `yyyy-MM-dd` plus `days`, in calendar days (no time zones involved). */
+export function addDays(iso: string, days: number): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
 function isRealDate(year: number, month: number, day: number): boolean {
   if (year < 1000 || month < 1 || month > 12 || day < 1) {
     return false;

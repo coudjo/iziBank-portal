@@ -400,20 +400,6 @@ export function securityHandlers(
   const accepted = (changeRequestId: number) => HttpResponse.json({ changeRequestId }, { status: 202 });
 
   return [
-    http.get(
-      `${base}/branches`,
-      ({ request }) =>
-        guard(request) ??
-        HttpResponse.json(
-          BRANCHES.map((branch) => ({
-            ...branch,
-            operatingLicenseNo: null,
-            clearingDays: 0,
-            isActive: true,
-          })),
-        ),
-    ),
-
     http.get(`${base}/modules`, ({ request }) => guard(request) ?? HttpResponse.json(MODULES)),
 
     http.get(`${base}/staff-users`, ({ request }) => {

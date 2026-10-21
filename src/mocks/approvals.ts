@@ -166,11 +166,6 @@ export function approvalHandlers(
       return HttpResponse.json({ items, page: 1, pageSize: 100, totalCount: items.length });
     }),
 
-    http.get(
-      `${base}/lookups/ledger-account-types`,
-      ({ request }) => signedIn(request) ?? HttpResponse.json(LEDGER_TYPES),
-    ),
-
     http.post(`${base}/ledger-accounts`, async ({ request }) => {
       const denied = signedIn(request);
       if (denied) {

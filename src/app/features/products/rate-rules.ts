@@ -1,4 +1,7 @@
 import type { ProductRateView } from '../../core/api/api-types';
+import { addDays } from '../../core/formats/dates';
+
+export { addDays };
 
 /** A rate the user is about to add (API A5-02). Amounts null mean an open band; `to` null means open-ended. */
 export interface RateDraft {
@@ -7,13 +10,6 @@ export interface RateDraft {
   maximumAmount: number | null;
   from: string;
   to: string | null;
-}
-
-/** `yyyy-MM-dd` plus `days`, in calendar days (no time zones involved). */
-export function addDays(iso: string, days: number): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + days));
-  return date.toISOString().slice(0, 10);
 }
 
 const bandsOverlap = (a: RateBand, b: RateBand) =>

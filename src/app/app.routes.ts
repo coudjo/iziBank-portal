@@ -1,6 +1,12 @@
 import { isDevMode } from '@angular/core';
 import { Routes } from '@angular/router';
-import { changePasswordGuard, guestGuard, requirePermission, signedInGuard } from './core/auth/auth.guards';
+import {
+  changePasswordGuard,
+  guestGuard,
+  requireAnyPermission,
+  requirePermission,
+  signedInGuard,
+} from './core/auth/auth.guards';
 import { canApprove } from './features/approvals/can-approve.guard';
 import { NAV_ITEMS } from './layout/navigation';
 
@@ -9,7 +15,11 @@ const placeholders: Routes = isDevMode()
       path: item.path.slice(1),
       title: item.label,
       data: { title: item.label },
-      canMatch: item.permission ? [requirePermission(item.permission)] : [],
+      canMatch: item.permission
+        ? [requirePermission(item.permission)]
+        : item.anyOf
+          ? [requireAnyPermission(item.anyOf)]
+          : [],
       loadComponent: () => import('./features/system/system.pages').then((m) => m.ComingSoonPage),
     }))
   : [];
@@ -73,6 +83,16 @@ export const routes: Routes = [
         path: 'approvals',
         canMatch: [canApprove],
         loadChildren: () => import('./features/approvals/approvals.routes').then((m) => m.APPROVAL_ROUTES),
+      },
+      {
+        path: 'business-day',
+        title: 'Business day',
+        canMatch: [requirePermission({ module: 'REF', subModule: 'CALENDAR', action: 'view' })],
+        loadComponent: () => import('./features/reference/business-day.page').then((m) => m.BusinessDayPage),
+      },
+      {
+        path: 'reference',
+        loadChildren: () => import('./features/reference/reference.routes').then((m) => m.REFERENCE_ROUTES),
       },
       {
         path: 'admin',

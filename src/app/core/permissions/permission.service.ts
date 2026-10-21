@@ -31,6 +31,11 @@ export class PermissionService {
     return allows(this.grants(), rule);
   }
 
+  /** True when any of the rules allows (a page that serves several roles). */
+  canAny(rules: readonly PermissionRule[]): boolean {
+    return rules.some((rule) => this.can(rule));
+  }
+
   /** True when the user may approve anything at all (approvals badge, approvals menu). */
   canSuperviseAnything(): boolean {
     return this.grants().some((grant) => grant.allowSupervise);

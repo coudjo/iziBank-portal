@@ -60,7 +60,7 @@ const MINIMUM_MEMBERS = 5;
 export const CREDIT_OFFICERS = [
   {
     creditOfficerId: 1,
-    staffUserId: 6,
+    staffUserId: 8,
     staffCode: 'CO1',
     fullName: 'Kojo Antwi',
     branchId: 1,
@@ -767,23 +767,6 @@ export function partyHandlers(
 ) {
   return [
     ...kycHandlers(base, signedIn, who),
-    http.get(`${base}/lookups/genders`, ({ request }) => signedIn(request) ?? HttpResponse.json(GENDERS)),
-    http.get(
-      `${base}/lookups/identification-document-types`,
-      ({ request }) => signedIn(request) ?? HttpResponse.json(ID_TYPES),
-    ),
-    http.get(
-      `${base}/credit-officers`,
-      ({ request }) => signedIn(request) ?? HttpResponse.json(CREDIT_OFFICERS),
-    ),
-    http.get(
-      `${base}/lookups/business-categories`,
-      ({ request }) => signedIn(request) ?? HttpResponse.json(BUSINESS_CATEGORIES),
-    ),
-    http.get(
-      `${base}/lookups/group-member-roles`,
-      ({ request }) => signedIn(request) ?? HttpResponse.json(MEMBER_ROLES),
-    ),
     ...organisationHandlers(base, signedIn),
 
     http.post(`${base}/parties/search`, async ({ request }) => {
