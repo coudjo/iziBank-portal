@@ -92,6 +92,21 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   'account.not-dormant': 'This account is not dormant.',
   'account.close-blocked': 'The account cannot be closed yet. Check the list below.',
   'account.classification-exists': 'The account already has this classification.',
+  'account.frozen': 'This account is frozen. Nothing can be paid in or out.',
+  'account.credit-blocked': 'This account does not accept money in.',
+  'account.debit-blocked': 'This account does not allow money out.',
+  'account.credit-limit': "The amount is above this account's limit for money in.",
+  'account.debit-limit': "The amount is above this account's limit for money out.",
+  'account.dormant': 'This account is dormant. Reactivate it before paying money out.',
+  'account.insufficient-funds': 'The available balance is not enough for this amount.',
+  'account.signer-kyc-lapsed':
+    'A signer on this account needs their KYC renewed before money can be paid out.',
+  'transaction.mandate-not-confirmed': "The signers you confirmed are not enough for this account's mandate.",
+  'transaction.currency-mismatch': 'These accounts are in different currencies.',
+  'ledger.setting-missing': 'A ledger account this posting needs has not been set up. Ask an accountant.',
+  'posting.expired': 'This request was made on an earlier business day and can no longer be approved.',
+  'posting.not-requester': 'Only the person who made this request can cancel it.',
+  'idempotency.key-required': 'Something went wrong sending this. Try again.',
 };
 
 /** Portal-only problems that never come from the API. */
